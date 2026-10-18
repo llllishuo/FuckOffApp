@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FuckOff</string>
+    <string name="app_tagline">黑名单应用清理器</string>
+
+    <string name="hero_title">把不需要的应用，\n请出你的手机。</string>
+    <string name="hero_subtitle">设置黑名单，FuckOff 会在应用出现时自动清理，或提醒你手动卸载。</string>
+
+    <string name="mode_auto">自动模式</string>
+    <string name="mode_manual">手动模式</string>
+    <string name="mode_auto_short">自动</string>
+    <string name="mode_manual_short">手动</string>
+
+    <string name="status_label">守护状态</string>
+    <string name="status_on">守护中</string>
+    <string name="status_off">已暂停</string>
+    <string name="status_on_desc">正在后台监视应用安装，黑名单规则已生效。</string>
+    <string name="status_off_desc">开启守护后，才会执行黑名单规则。</string>
+
+    <string name="stat_blacklist">黑名单</string>
+    <string name="stat_pending">待清理</string>
+    <string name="stat_removed">已清理</string>
+
+    <string name="section_blacklist">黑名单</string>
+    <string name="action_add">添加</string>
+    <string name="action_add_long">＋  添加黑名单应用</string>
+    <string name="action_add_button">添加黑名单应用</string>
+    <string name="action_manage">管理</string>
+    <string name="action_clear">清空</string>
+    <string name="action_uninstall">卸载</string>
+    <string name="action_remove">移除</string>
+    <string name="action_cancel">取消</string>
+    <string name="action_continue">继续</string>
+    <string name="action_save">保存</string>
+    <string name="action_refresh">刷新状态</string>
+    <string name="action_copy">复制命令</string>
+    <string name="action_back">返回</string>
+
+    <string name="empty_blacklist_title">黑名单还是空的</string>
+    <string name="empty_blacklist_desc">添加你不想留在手机上的应用。\nFuckOff 只在应用出现时采取行动。</string>
+    <string name="empty_events">还没有记录。发现或清理应用后会显示在这里。</string>
+
+    <string name="auto_title">自动卸载</string>
+    <string name="auto_state_on">自动模式 · 已开启</string>
+    <string name="auto_state_off">手动确认</string>
+    <string name="auto_desc_on">设备所有者已就绪。跟随系统的黑名单应用会被静默卸载；仅手动项始终由你确认。</string>
+    <string name="auto_desc_off">关闭后，将改为通知你手动确认卸载。</string>
+    <string name="auto_requires_owner">需要「设备所有者」权限才能静默卸载。未配置时使用手动确认。</string>
+    <string name="auto_owner_open">配置设备所有者 →</string>
+    <string name="auto_owner_manage">管理设备所有者权限 →</string>
+    <string name="auto_owner_lost">设备所有者权限已失效，自动卸载暂停。</string>
+
+    <string name="auto_state_locked">需要设备所有者</string>
+    <string name="enable_auto_title">开启自动卸载？</string>
+    <string name="enable_auto_msg">已安装的 %1$d 个跟随系统的黑名单应用会被立即卸载。仅手动项不会自动清理。</string>
+
+    <string name="recent_title">最近动态</string>
+    <string name="footer">FuckOff v%1$s  ·  数据只保存在本机  ·  无网络权限</string>
+
+    <string name="status_pending">待清理</string>
+    <string name="status_installed">已安装</string>
+    <string name="status_removed">已卸载</string>
+    <string name="status_blocked">已拦截</string>
+
+    <string name="confirm_uninstall_title">确认卸载？</string>
+    <string name="confirm_uninstall_msg">将从这台手机彻底卸载「%1$s」，应用数据也会被删除。</string>
+    <string name="confirm_auto_uninstall_msg">自动模式已开启，将直接卸载「%1$s」。</string>
+    <string name="confirm_remove_title">移出黑名单？</string>
+    <string name="confirm_remove_msg">「%1$s」不会被卸载，并会停止被监控。</string>
+    <string name="confirm_clear_log_title">清空最近动态？</string>
+    <string name="confirm_clear_log_msg">只会清空本机记录，不会影响黑名单。</string>
+
+    <string name="toast_added">已加入黑名单</string>
+    <string name="toast_removed">已移出黑名单</string>
+    <string name="toast_monitor_on">守护已开启</string>
+    <string name="toast_monitor_off">守护已暂停</string>
+    <string name="toast_auto_on">自动卸载已开启</string>
+    <string name="toast_auto_off">已切换为手动确认</string>
+    <string name="toast_do_ready">设备所有者已生效</string>
+    <string name="toast_do_not_ready">尚未配置设备所有者</string>
+    <string name="toast_command_copied">命令已复制</string>
+    <string name="toast_uninstall_opened">请在系统界面确认卸载</string>
+    <string name="toast_uninstall_failed">无法打开系统卸载界面</string>
+    <string name="toast_not_installed">应用已不在手机上</string>
+    <string name="toast_notification_denied">通知权限未开启，后台提醒可能不可见</string>
+    <string name="toast_owner_cleared">设备所有者权限已取消</string>
+    <string name="toast_owner_clear_failed">无法自动取消，请使用 ADB 命令</string>
+
+    <string name="notif_channel_monitor">后台守护</string>
+    <string name="notif_channel_monitor_desc">保持黑名单监视运行</string>
+    <string name="notif_channel_alert">黑名单警报</string>
+    <string name="notif_channel_alert_desc">发现黑名单应用时的提醒</string>
+    <string name="notif_monitor_title">FuckOff 正在守护</string>
+    <string name="notif_monitor_text">已监控 %1$d 个黑名单应用 · 点击管理</string>
+    <string name="notif_monitor_text_zero">尚无黑名单应用 · 点击添加</string>
+    <string name="notif_monitor_pause">暂停守护</string>
+    <string name="notif_alert_title">发现黑名单应用</string>
+    <string name="notif_alert_text">「%1$s」在你的手机上出现，点按立即卸载。</string>
+    <string name="notif_alert_text_failed">「%1$s」自动卸载失败，请手动卸载。</string>
+    <string name="notif_alert_action">立即卸载</string>
+
+    <string name="event_add">已将「%1$s」加入黑名单</string>
+    <string name="event_remove">已将「%1$s」移出黑名单</string>
+    <string name="event_auto_success">已自动卸载「%1$s」</string>
+    <string name="event_auto_fail">自动卸载「%1$s」失败：%2$s</string>
+    <string name="event_manual_prompt">「%1$s」出现，等待手动卸载</string>
+    <string name="event_manual_success">已手动卸载「%1$s」</string>
+    <string name="event_manual_cancel">已取消卸载「%1$s」</string>
+    <string name="event_monitor_on">守护已开启</string>
+    <string name="event_monitor_off">守护已暂停</string>
+    <string name="event_owner_ready">设备所有者已配置，自动模式可用</string>
+    <string name="event_owner_lost">设备所有者权限已失效</string>
+    <string name="event_scan">后台扫描完成，未发现待清理应用</string>
+    <string name="event_alert_again">「%1$s」仍在手机上，记得手动卸载</string>
+
+    <string name="reason_blocked">被系统或设备策略阻止</string>
+    <string name="reason_not_found">应用已不存在</string>
+    <string name="reason_aborted">卸载请求被取消</string>
+    <string name="reason_storage">存储空间不足</string>
+    <string name="reason_incompatible">系统不兼容</string>
+    <string name="reason_security">需要设备所有者权限</string>
+    <string name="reason_pending_user">系统要求手动确认</string>
+    <string name="reason_unknown">错误码 %1$d</string>
+
+    <string name="time_just_now">刚刚</string>
+    <string name="time_minutes">%1$d 分钟前</string>
+    <string name="time_hours">%1$d 小时前</string>
+    <string name="time_days">%1$d 天前</string>
+
+    <string name="picker_title">选择应用</string>
+    <string name="picker_subtitle">选择要移出手机的应用</string>
+    <string name="picker_selected">已选择 %1$d 个</string>
+    <string name="picker_search_hint">搜索应用名称或包名</string>
+    <string name="picker_confirm">加入黑名单</string>
+    <string name="picker_confirm_count">加入黑名单（%1$d）</string>
+    <string name="picker_loading">正在读取已安装应用…</string>
+    <string name="picker_empty">没有可添加的用户应用</string>
+    <string name="picker_no_result">没有找到匹配的应用</string>
+    <string name="picker_auto_warning_title">自动卸载已开启</string>
+    <string name="picker_auto_warning_msg">以下应用当前已安装，加入黑名单后会立即被静默卸载：\n\n%1$s\n\n确定继续？</string>
+    <string name="picker_added_manual">已添加 %1$d 个应用，可在首页点「卸载」手动清理。</string>
+    <string name="picker_added_paused">已添加 %1$d 个应用。守护当前暂停，开启后才会执行清理。</string>
+    <string name="picker_added_count">已添加 %1$d 个应用</string>
+    <string name="picker_auto_started">已开始自动清理</string>
+
+    <string name="do_title">自动卸载设置</string>
+    <string name="do_subtitle">设备所有者与静默卸载</string>
+    <string name="do_status_label">设备所有者</string>
+    <string name="do_ready">已就绪</string>
+    <string name="do_not_ready">未配置</string>
+    <string name="do_ready_desc">FuckOff 已获得设备管理权限，可以静默卸载黑名单中的应用。</string>
+    <string name="do_not_ready_desc">配置后，自动模式才能在不弹出系统界面的情况下卸载应用。</string>
+    <string name="do_intro">Android 不允许普通应用静默卸载其他应用。要让 FuckOff 自动执行黑名单，需要将本应用配置为这台手机的「设备所有者」（Device Owner）。</string>
+    <string name="do_warning">设备所有者是企业级管理权限，会授予本应用较强的设备管理能力。请只在自己的手机或你负责管理的设备上使用，并先备份数据。</string>
+    <string name="do_step1">开启开发者选项与 USB 调试</string>
+    <string name="do_step1_desc">设置 → 关于手机 → 连续点按版本号 7 次；然后在开发者选项中打开 USB 调试。</string>
+    <string name="do_step2">用数据线连接电脑并执行 ADB 命令</string>
+    <string name="do_step2_desc">电脑需要已安装 adb。手机弹出「允许 USB 调试」时请点允许。</string>
+    <string name="do_command_label">ADB 命令</string>
+    <string name="do_step3">回到本页检测权限</string>
+    <string name="do_step3_desc">如果提示已有账户、工作资料或已配置其他设备所有者，通常需要恢复出厂设置后重新配置。</string>
+    <string name="do_refresh_desc">配置不会自动生效，执行命令后请点按下方按钮。</string>
+    <string name="do_check">检测权限</string>
+    <string name="do_clear_title">取消设备所有者</string>
+    <string name="do_clear_desc">取消后会自动卸载功能立即失效，手动模式仍然可用。若应用内取消失败，可通过 ADB 解除。</string>
+    <string name="do_clear_action">取消设备所有者权限</string>
+    <string name="do_clear_confirm_title">取消设备所有者？</string>
+    <string name="do_clear_confirm_msg">取消后，FuckOff 将无法继续静默卸载应用。确定继续？</string>
+    <string name="action_confirm_cancel">确定取消</string>
+    <string name="do_security_title">这个权限用来做什么</string>
+    <string name="do_security_text">仅用于卸载你主动加入黑名单的用户应用。FuckOff 没有网络权限，不会上传应用列表、黑名单或使用记录，也不会卸载系统应用。</string>
+    <string name="do_command_failed">命令执行失败，请检查设备是否已连接、是否已有账户。</string>
+    <string name="do_footer">配置设备所有者前建议先备份。部分品牌手机的系统可能限制该流程。</string>
+
+    <string name="privacy_title">本机运行，不联网</string>
+    <string name="privacy_desc">FuckOff 没有申请网络权限。黑名单、日志与应用列表只保存在本机。</string>
+
+    <string name="app_icon_desc">FuckOff 图标</string>
+    <string name="back_desc">返回</string>
+    <string name="app_logo_desc">盾牌图标</string>
+    <string name="status_icon_desc">状态</string>
+    <string name="search_desc">搜索</string>
+    <string name="warning_desc">警告</string>
+    <string name="lock_desc">隐私保护</string>
+    <string name="remove_desc">移除</string>
+
+    <string name="owner_command_hint">复制后，在电脑终端中运行。</string>
+    <string name="owner_status_ready_short">已配置设备所有者</string>
+    <string name="owner_status_missing_short">自动模式未就绪</string>
+
+    <string name="notification_permission_title">允许通知</string>
+    <string name="notification_permission_msg">后台守护和手动卸载提醒需要通知权限。请在系统设置中允许 FuckOff 发送通知。</string>
+    <string name="action_import">导入</string>
+    <string name="action_export">导出</string>
+
+    <string name="export_success">已导出 %1$d 个应用到 JSON 文件</string>
+    <string name="export_failed">导出失败，请检查文件是否可写</string>
+    <string name="export_chooser_failed">无法打开文件选择器</string>
+    <string name="import_chooser_failed">无法打开文件选择器</string>
+    <string name="import_failed_title">导入失败</string>
+    <string name="import_read_failed">无法读取所选文件</string>
+    <string name="import_too_large">JSON 文件过大（上限 2 MB）</string>
+    <string name="import_too_many_entries">导入条目过多（上限 200 条）</string>
+    <string name="import_invalid_json">文件不是有效的 FuckOff 黑名单 JSON</string>
+    <string name="import_empty">JSON 中没有可导入的应用</string>
+    <string name="import_confirm_title">导入黑名单？</string>
+    <string name="import_confirm_msg">将合并导入 %1$d 个应用：新增 %2$d 个，已存在 %3$d 个；忽略 %4$d 个无效项。\n\n现有黑名单不会被删除。</string>
+
+    <string name="import_confirm_action">导入</string>
+    <string name="import_success">导入完成：新增 %1$d 个应用</string>
+    <string name="import_none_added">导入完成，没有新增应用（均已存在）</string>
+
+    <string name="mode_follow_system">跟随系统</string>
+    <string name="mode_manual_only">仅手动</string>
+    <string name="mode_choose_title">卸载方式</string>
+    <string name="mode_follow_choice">跟随系统（自动模式启用时自动卸载）</string>
+    <string name="mode_manual_choice">仅手动（始终由你确认）</string>
+    <string name="mode_changed_follow">已设为跟随系统</string>
+    <string name="mode_changed_manual">已设为仅手动</string>
+    <string name="status_protected">受保护</string>
+    <string name="safety_note">安全保护：默认桌面、输入法、电话/短信、设备管理员和活动无障碍服务不会被卸载。</string>
+    <string name="picker_safety_note">默认桌面、输入法、电话/短信、设备管理员等关键应用已自动排除。</string>
+    <string name="toast_protected_app">该应用是设备关键应用，已受保护，不能卸载</string>
+    <string name="blacklist_limit_reached">黑名单最多 200 个应用</string>
+    <string name="import_manual_notice">导入的每个应用都会设为「仅手动」，不会立即自动卸载；之后可在列表里单独改为跟随系统。</string>
+    <string name="import_limit_notice">黑名单最多 %1$d 个；本次只会加入前 %2$d 个新应用。</string>
+
+    <string name="safety_rules_title">安全审查规则</string>
+    <string name="safety_rules_subtitle">基础审查固定启用 · 自定义规则只增加保护</string>
+    <string name="safety_rules_chip">保护规则</string>
+    <string name="baseline_title">基础审查始终启用</string>
+    <string name="baseline_desc">系统应用、默认桌面/输入法/电话短信、设备管理员、无障碍服务等固定规则不可关闭。自定义规则只能在这些保护之上增加规则。</string>
+    <string name="custom_rules_title">自定义规则</string>
+    <string name="rules_empty">还没有自定义规则。可以针对特定机型或 Android 版本，保护额外的系统应用或默认角色应用。</string>
+    <string name="add_rule">＋ 添加规则</string>
+    <string name="action_edit">编辑</string>
+    <string name="action_delete">删除</string>
+    <string name="rule_name_label">规则名称</string>
+    <string name="rule_unnamed">未命名规则</string>
+    <string name="rule_name_hint">例如：保护这台手机的 OEM 桌面</string>
+    <string name="rule_expression_label">Lua 表达式</string>
+    <string name="rule_expression_hint" formatted="false">例如：pkg:match(\&quot;^com%.oem%.\&quot;) ~= nil</string>
+    <string name="rule_help_title">可用变量与写法</string>
+    <string name="rule_vars_help">pkg（包名）、sdk、brand、manufacturer、model、device。规则是单个 Lua 表达式；不支持循环、函数定义、注释、文件或网络。基础审查始终独立生效。</string>
+    <string name="rule_examples" formatted="false">示例：
+• pkg == \&quot;com.example.launcher\&quot;
+• pkg:match(\&quot;^com%.oem%.\&quot;) ~= nil
+• sdk &gt;= 31 and pkg:find(\&quot;keyboard\&quot;) ~= nil</string>
+    <string name="rule_baseline_note">提示：自定义规则只能增加「受保护」判断，无法关闭基础审查，也不能允许卸载关键应用。</string>
+    <string name="rule_add_title">添加规则</string>
+    <string name="rule_edit_title">编辑规则</string>
+    <string name="rule_edit_subtitle">自定义保护 · 只增不减</string>
+    <string name="rule_save">保存规则</string>
+    <string name="rule_error_name">请填写规则名称</string>
+    <string name="rule_error_expr">请填写 Lua 表达式</string>
+    <string name="rule_error_name_long">规则名称最多 60 个字符</string>
+    <string name="rule_error_limit">最多添加 50 条规则</string>
+    <string name="rule_saved">规则已保存</string>
+    <string name="rule_deleted">规则已删除</string>
+    <string name="delete_rule_title">删除规则？</string>
+    <string name="delete_rule_msg">删除「%1$s」后，这项额外保护会失效；基础审查不受影响。</string>
+
+    <string name="about_title">关于</string>
+    <string name="about_author">作者：MenghanStudio</string>
+    <string name="about_license">开源协议：Apache License 2.0</string>
+    <string name="about_repo">开源地址：https://github.com/llllishuo/FuckOffApp</string>
+    <string name="about_bilibili">Bilibili：StudioMenghan</string>
+    <string name="about_qq">QQ：1756524586</string>
+</resources>

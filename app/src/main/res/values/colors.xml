@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#0B1020</color>
+    <color name="bg_deep">#080C17</color>
+    <color name="surface">#131B2E</color>
+    <color name="surface_soft">#101728</color>
+    <color name="surface_high">#182238</color>
+    <color name="stroke">#24304A</color>
+    <color name="stroke_soft">#1E2940</color>
+    <color name="text">#F6F7FC</color>
+    <color name="text_soft">#C3CADB</color>
+    <color name="text_muted">#8894AE</color>
+    <color name="accent">#FF7078</color>
+    <color name="accent_pressed">#E95863</color>
+    <color name="accent_soft">#2B1A24</color>
+    <color name="teal">#42DDA0</color>
+    <color name="teal_dim">#183128</color>
+    <color name="amber">#F3C969</color>
+    <color name="amber_dim">#2C2618</color>
+    <color name="purple">#A99BFF</color>
+    <color name="purple_dim">#211E38</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+    <color name="icon_bg">#0E1424</color>
+    <color name="scrim">#B3000000</color>
+    <color name="on_accent">#1B0C10</color>
+</resources>

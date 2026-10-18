@@ -2,16 +2,25 @@
 
 > 把不需要的应用，请出你的手机。
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
 FuckOff 是一款 Android 黑名单应用清理器：你把自己选中的应用加入黑名单，之后只要这些应用出现在手机上，FuckOff 就会自动卸载，或在通知里提醒你手动确认卸载。
 
 - 纯本地运行，**没有申请网络权限**
 - 只处理你主动加入黑名单的**用户应用**，不会碰系统应用
 - 无 root、无无障碍自动点击、无隐藏 API
 - 自动模式使用 Android 官方 `PackageInstaller.uninstall` 的 **Device Owner** 能力
+- 基础审查固定启用；可按 Android 版本或机型添加受限 Lua 保护规则
 
 ## 界面预览
 
-![FuckOff 主界面](docs/screen-main.png)
+| 首页 | 安全审查规则 |
+| --- | --- |
+| ![FuckOff 主界面](docs/screen-main.png) | ![安全审查规则](docs/screen-rules.png) |
+
+> 截图使用了一条演示用测试规则；新安装的 APK 默认没有任何自定义规则，基础审查始终启用。
+
+![关于与联系方式](docs/screen-about.png)
 
 ---
 
@@ -26,6 +35,7 @@ FuckOff 是一款 Android 黑名单应用清理器：你把自己选中的应用
 - 每个黑名单项可独立选择「跟随系统」或「仅手动」；新添加项默认跟随系统
 - 黑名单支持 JSON 导出 / 导入（系统文件选择器，无需存储权限）
 - 安全保护：关键系统角色不会被卸载
+- 安全审查规则：基础审查固定，另可添加最多 50 条 Lua 表达式规则，按包名/Android 版本/品牌等增加保护
 
 ### 两种执行模式
 
@@ -65,6 +75,29 @@ FuckOff 是一款 Android 黑名单应用清理器：你把自己选中的应用
 
 它们不会出现在应用选择器里；如果通过旧数据或 JSON 出现，主页会显示「受保护」，不会发送卸载请求。黑名单同时限制为最多 200 条，避免异常数据拖垮界面。
 
+
+### 自定义安全审查规则
+
+不同 Android 版本和 OEM 的关键角色不完全相同，首页「保护规则」支持在**固定基础审查**之上追加本地规则。
+
+- **基础审查不能被关闭**：系统应用、默认桌面/输入法/电话短信、设备管理员、无障碍服务等仍然始终生效。
+- 自定义规则**只能增加保护**，没有“允许卸载”或“取消保护”的写法。
+- 每条规则是一个 Lua 表达式，返回真值即视为受保护；例如：
+
+```lua
+pkg == "com.example.launcher"
+pkg:match("^com%.oem%.") ~= nil
+sdk >= 31 and pkg:find("keyboard") ~= nil
+```
+
+- 可用变量：`pkg`（包名）、`sdk`（Android API 级别）、`brand`、`manufacturer`、`model`、`device`。
+- 为了不把规则变成可执行任意代码的入口，只支持**单个表达式**；会拒绝循环、函数定义、注释、长字符串和分号，也不提供 `os` / `io` / `package` / `load` / `luajava`。
+- 最多 50 条规则，单条表达式最多 800 个字符；所有规则只保存在本机。
+- 规则出错时只会跳过该规则，基础审查和 App 本身不受影响。
+- 规则不包含在黑名单 JSON 的导出/导入中，需要在当前设备上单独添加。
+
+内置 [LuaJ 3.0.1](THIRD_PARTY_NOTICES.md) 作为受限表达式求值器，没有引入网络或文件访问能力。
+
 ### 后台监控
 
 1. 前台服务内**动态注册**的 `PACKAGE_ADDED` 广播：应用一安装就立即处理，不受 Android 8+ 对清单广播的后台限制
@@ -82,10 +115,10 @@ FuckOff 是一款 Android 黑名单应用清理器：你把自己选中的应用
 
 ## 安装
 
-仓库根目录已包含构建好的 `FuckOff-v1.2.0.apk`。可通过 ADB 安装：
+构建产物位于本地项目根目录 `FuckOff-v1.3.2.apk`（按 `.gitignore` 规则不纳入 Git）。可通过 ADB 安装：
 
 ```bash
-adb install -r FuckOff-v1.2.0.apk
+adb install -r FuckOff-v1.3.2.apk
 ```
 
 重新构建时产物位于：
@@ -95,6 +128,8 @@ app/build/outputs/apk/release/app-release.apk
 ```
 
 Release APK 默认使用本机的 Android debug key 签名，方便侧载测试。正式分发前请替换为自己的 release keystore。
+
+唯一第三方运行时依赖是 LuaJ 3.0.1（MIT，用于本地受限规则表达式），没有网络能力。
 
 > 应用显示名已改为 **FuckOff**，但包名仍保留为 `com.menghanstudio.gooutpls`，以确保已配置的 Device Owner 和后续升级不受影响。ADB 命令中的包名不需要改变。
 
@@ -266,9 +301,13 @@ app/src/main/
 │   ├── AppPickerActivity.java         搜索与多选已安装应用
 │   ├── DeviceOwnerActivity.java       Device Owner 配置与移除
 │   ├── ManualUninstallActivity.java   打开系统卸载界面的透明代理
+│   ├── SafetyRulesActivity.java       自定义保护规则列表
+│   ├── RuleEditActivity.java          添加/编辑受限 Lua 规则
 │   ├── core/
 │   │   ├── AppCatalog.java            应用可见性、系统应用过滤
 │   │   ├── AppSafetyGuard.java        默认桌面/输入法/管理员等安全保护
+│   │   ├── RuleEngine.java            受限 Lua 表达式求值
+│   │   ├── RuleRepository.java        用户规则本地存储
 │   │   ├── AppPrefs.java              设置与操作标记
 │   │   ├── BlacklistRepository.java   黑名单持久化
 │   │   ├── BlacklistJsonCodec.java    JSON 导入导出编解码
@@ -280,6 +319,8 @@ app/src/main/
 │   └── util/NotificationHelper.java   通知与渠道
 └── res/                               UI、主题、图标
 ```
+
+项目根目录另含 `LICENSE`（Apache-2.0）、`NOTICE` 和 `THIRD_PARTY_NOTICES.md`（LuaJ 3.0.1，MIT）。这些许可文本也打包在 APK 的 `assets/` 中。
 
 ### 关键实现
 
@@ -295,7 +336,7 @@ installer.uninstall(packageName, statusPendingIntent.getIntentSender());
 
 ## 测试状态
 
-已在 Android 9（API 28）模拟器上完成 Device Owner、自动静默卸载、单项手动模式、导入强制手动且不立即清理、通知手动卸载、后台安装检测、JSON 导出/导入和权限取消的端到端验证；Lint 为 0 errors。详细记录见 [TESTING.md](TESTING.md)。Android 13+ 的运行时通知权限和 Android 14+ 的 `specialUse` 前台服务仅完成代码适配，未在对应版本真机上实测。
+已在 Android 9（API 28）模拟器上完成 Device Owner、自动静默卸载、单项手动模式、自定义 Lua 规则（保存/开关/删除/按包名匹配/非法规则拒绝）、导入强制手动且不立即清理、通知手动卸载、后台安装检测、JSON 导出/导入和权限取消的端到端验证；Lint 为 0 errors。详细记录见 [TESTING.md](TESTING.md)。Android 13+ 的运行时通知权限和 Android 14+ 的 `specialUse` 前台服务仅完成代码适配，未在对应版本真机上实测。
 
 ## 已知边界
 
@@ -305,6 +346,7 @@ installer.uninstall(packageName, statusPendingIntent.getIntentSender());
 - 某些 OEM 会限制后台启动或杀前台服务；`JobScheduler` 作为兜底，但极端省电策略仍可能延迟处理
 - 用户手动“强行停止”应用后，监控会暂停，直到再次打开应用；这是 Android 的系统行为
 - 目标应用如果自身是活动设备管理员，系统可能拒绝卸载，需要先在系统设置中取消其设备管理员
+- 自定义规则是受限 Lua 表达式，不是完整 Lua；需要循环、函数或文件访问的复杂逻辑请使用宿主机脚本生成包名后添加简单规则
 - 不提供远程管理、云同步或家长控制服务器；这是本地工具
 
 ---
@@ -317,4 +359,18 @@ installer.uninstall(packageName, statusPendingIntent.getIntentSender());
 
 ## 许可
 
-本项目为交付给委托方的定制应用代码，未附带开源许可证。第三方依赖仅使用 Android 平台 API。
+本项目采用 **[Apache License 2.0](LICENSE)** 开源许可，允许商业使用、修改、分发、私用，并提供明确的专利授权。分发或修改时请保留 `LICENSE`、`NOTICE` 和版权声明；修改过的文件需按要求标注修改。
+
+Copyright 2026 MenghanStudio。若你的实际权利主体不同，请修改 `NOTICE` 中的版权行。
+
+第三方组件 LuaJ 3.0.1 使用 MIT 许可证，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)；LuaJ 与 Apache-2.0 兼容，其声明随 APK 的 `assets/third_party_notices.txt` 一并分发。
+
+完整许可文本也随 APK 打包在 `assets/LICENSE.txt` 与 `assets/NOTICE.txt`。
+
+## 关于
+
+- 作者：MenghanStudio
+- 开源协议：[Apache License 2.0](LICENSE)
+- 开源地址：https://github.com/llllishuo/FuckOffApp
+- Bilibili：StudioMenghan
+- QQ：1756524586

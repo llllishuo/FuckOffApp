@@ -1,4 +1,4 @@
-﻿# GitHub Release 发布模板
+# GitHub Release 发布模板
 
 每次版本变更后复制本模板，填写并保存为 `release-notes/vX.Y.Z.md`。
 

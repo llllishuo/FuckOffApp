@@ -33,6 +33,7 @@ FuckOff 是一款 Android 黑名单应用清理器：你把自己选中的应用
 - 首页展示黑名单、待清理数量、已清理次数
 - 支持手动“卸载”或“移出黑名单”
 - 每个黑名单项可独立选择「跟随系统」或「仅手动」；新添加项默认跟随系统
+- 自动处理支持三种清理方式：手动通知、Device Owner 静默卸载、Shizuku 静默卸载
 - 黑名单支持 JSON 导出 / 导入（系统文件选择器，无需存储权限）
 - 安全保护：关键系统角色不会被卸载
 - 安全审查规则：基础审查固定，另可添加最多 50 条 Lua 表达式规则，按包名/Android 版本/品牌等增加保护
@@ -42,10 +43,26 @@ FuckOff 是一款 Android 黑名单应用清理器：你把自己选中的应用
 | 模式 | 需要什么 | 行为 |
 | --- | --- | --- |
 | 手动模式 | 无 | 发现黑名单应用后发出通知，点按后进入系统卸载确认界面 |
-| 自动模式 | Device Owner + 通知权限（建议） | 对「跟随系统」的黑名单项静默卸载；「仅手动」项始终确认 |
+| 自动模式 | Device Owner 或 Shizuku | 对「跟随系统」的黑名单项使用所选引擎静默卸载；「仅手动」项始终确认 |
 
-> **普通 Android 应用无法静默卸载其他应用。** 自动模式必须把 FuckOff 配置成「设备所有者（Device Owner）」。这相当于企业设备管理权限，通常需要在没有账户的设备上通过 ADB 配置；很多手机需要恢复出厂设置后才能成功。无法配置时，手动模式仍然完整可用。
+> **普通 Android 应用无法静默卸载其他应用。** 自动处理需要 Device Owner 或 Shizuku：Device Owner 属于企业设备管理权限，通常需要恢复出厂或无账户环境；Shizuku 通过无线调试启动本地 shell，不需要 Device Owner，但仍属于进阶配置。两者都不可用时，手动模式仍然完整可用。
 
+
+
+### 自动处理引擎
+
+在首页「自动处理」卡片中点击「清理方式」切换：
+
+| 清理方式 | 条件 | 行为 |
+| --- | --- | --- |
+| 手动确认 | 无 | 只发通知，由你在系统界面确认卸载 |
+| Device Owner | 已配置 Device Owner | 使用系统 `PackageInstaller` 静默卸载 |
+| Shizuku | 已安装并启动 Shizuku，且已授权 FuckOff | 通过本地 shell 执行 `pm uninstall --user 0` 静默卸载 |
+
+- Shizuku 模式不需要 Device Owner，也不需要删除账户；
+- Shizuku 服务未运行或未授权时，FuckOff 会自动回退到手动通知；
+- 仅手动项始终不会被自动处理；
+- Shizuku 是独立第三方应用，需要用户自行安装和启动。
 
 ### 每个应用的清理方式
 
@@ -53,7 +70,7 @@ FuckOff 是一款 Android 黑名单应用清理器：你把自己选中的应用
 
 | 模式 | 行为 |
 | --- | --- |
-| 跟随系统 | 全局自动模式开启且 Device Owner 就绪时静默卸载；否则手动确认 |
+| 跟随系统 | 全局自动处理开启且所选引擎（Device Owner / Shizuku）就绪时静默卸载；否则手动确认 |
 | 仅手动 | 无论全局自动模式是否开启，都只发通知，由你在系统卸载界面确认 |
 
 - 新添加的应用默认「跟随系统」
@@ -107,7 +124,8 @@ sdk >= 31 and pkg:find("keyboard") ~= nil
 
 ### 删除即彻底
 
-- 自动模式通过 `PackageInstaller.uninstall()` 卸载，应用包和应用数据都会从设备移除
+- Device Owner 模式通过 `PackageInstaller.uninstall()` 卸载；Shizuku 模式通过 shell 执行 `pm uninstall --user 0`
+- 两种自动方式都会移除应用包和该用户下的应用数据
 - 手动模式走系统卸载界面，由 Android 再次确认
 - 只针对 `FLAG_SYSTEM` 之外的用户应用；系统应用和本应用自身永远不会被加入执行队列
 
@@ -115,10 +133,10 @@ sdk >= 31 and pkg:find("keyboard") ~= nil
 
 ## 安装
 
-构建产物位于本地项目根目录 `FuckOff-v1.3.4.apk`（按 `.gitignore` 规则不纳入 Git）。可通过 ADB 安装：
+构建产物位于本地项目根目录 `FuckOff-v1.4.0.apk`（按 `.gitignore` 规则不纳入 Git）。可通过 ADB 安装：
 
 ```bash
-adb install -r FuckOff-v1.3.4.apk
+adb install -r FuckOff-v1.4.0.apk
 ```
 
 重新构建时产物位于：
@@ -129,7 +147,7 @@ app/build/outputs/apk/release/app-release.apk
 
 Release APK 默认使用本机的 Android debug key 签名，方便侧载测试。正式分发前请替换为自己的 release keystore。
 
-唯一第三方运行时依赖是 LuaJ 3.0.1（MIT，用于本地受限规则表达式），没有网络能力。
+运行时第三方组件：LuaJ 3.0.1（MIT，本地受限规则表达式）、Shizuku API 13.1.5（MIT，仅 Shizuku 模式使用）。两者都没有网络权限。
 
 > 应用显示名已改为 **FuckOff**，但包名仍保留为 `com.menghanstudio.gooutpls`，以确保已配置的 Device Owner 和后续升级不受影响。ADB 命令中的包名不需要改变。
 
@@ -305,6 +323,8 @@ app/src/main/
 │   ├── RuleEditActivity.java          添加/编辑受限 Lua 规则
 │   ├── core/
 │   │   ├── AppCatalog.java            应用可见性、系统应用过滤
+│   │   ├── CleanupMode.java            手动/Device Owner/Shizuku 清理方式
+│   │   ├── ShizukuManager.java        Shizuku 权限与 shell 卸载
 │   │   ├── AppSafetyGuard.java        默认桌面/输入法/管理员等安全保护
 │   │   ├── RuleEngine.java            受限 Lua 表达式求值
 │   │   ├── RuleRepository.java        用户规则本地存储
@@ -336,7 +356,7 @@ installer.uninstall(packageName, statusPendingIntent.getIntentSender());
 
 ## 测试状态
 
-已在 Android 9（API 28）模拟器上完成 Device Owner、自动静默卸载、单项手动模式、自定义 Lua 规则（保存/开关/删除/按包名匹配/非法规则拒绝）、导入强制手动且不立即清理、通知手动卸载、后台安装检测、JSON 导出/导入和权限取消的端到端验证；并在 HONOR BKQ-AN90（Android 16 / MagicOS 10.0.0.170）冷启动验证 v1.3.4 可进入首页；Lint 为 0 errors。详细记录见 [TESTING.md](TESTING.md)。Android 13+ 的运行时通知权限和 Android 14+ 的 `specialUse` 前台服务仅完成代码适配，未在对应版本真机上实测。
+已在 Android 9（API 28）模拟器上完成 Device Owner、自动静默卸载、单项手动模式、自定义 Lua 规则（保存/开关/删除/按包名匹配/非法规则拒绝）、导入强制手动且不立即清理、通知手动卸载、后台安装检测、JSON 导出/导入和权限取消的端到端验证；并在 HONOR BKQ-AN90（Android 16 / MagicOS 10.0.0.170）冷启动验证 v1.4.0 可进入首页、清理方式选择与 Shizuku 配置引导；Lint 为 0 errors。Shizuku 实际卸载命令需要在安装并启动 Shizuku 后验证。详细记录见 [TESTING.md](TESTING.md)。Android 13+ 的运行时通知权限和 Android 14+ 的 `specialUse` 前台服务仅完成代码适配，未在对应版本真机上实测。
 
 ## 已知边界
 
@@ -346,6 +366,7 @@ installer.uninstall(packageName, statusPendingIntent.getIntentSender());
 - 某些 OEM 会限制后台启动或杀前台服务；`JobScheduler` 作为兜底，但极端省电策略仍可能延迟处理
 - 用户手动“强行停止”应用后，监控会暂停，直到再次打开应用；这是 Android 的系统行为
 - 目标应用如果自身是活动设备管理员，系统可能拒绝卸载，需要先在系统设置中取消其设备管理员
+- Shizuku 清理需要用户自行安装 Shizuku、开启无线调试并授权；Shizuku 服务被杀后会回退手动通知，无法保证始终在线
 - 自定义规则是受限 Lua 表达式，不是完整 Lua；需要循环、函数或文件访问的复杂逻辑请使用宿主机脚本生成包名后添加简单规则
 - 不提供远程管理、云同步或家长控制服务器；这是本地工具
 
@@ -363,7 +384,7 @@ installer.uninstall(packageName, statusPendingIntent.getIntentSender());
 
 Copyright 2026 MenghanStudio。若你的实际权利主体不同，请修改 `NOTICE` 中的版权行。
 
-第三方组件 LuaJ 3.0.1 使用 MIT 许可证，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)；LuaJ 与 Apache-2.0 兼容，其声明随 APK 的 `assets/third_party_notices.txt` 一并分发。
+第三方组件 LuaJ 3.0.1 与 Shizuku API 13.1.5 均使用 MIT 许可证，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)；声明随 APK 的 `assets/third_party_notices.txt` 一并分发。
 
 完整许可文本也随 APK 打包在 `assets/LICENSE.txt` 与 `assets/NOTICE.txt`。
 

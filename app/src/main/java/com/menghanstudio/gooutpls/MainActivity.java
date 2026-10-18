@@ -32,10 +32,12 @@ import com.menghanstudio.gooutpls.core.AppSafetyGuard;
 import com.menghanstudio.gooutpls.core.BlacklistEntry;
 import com.menghanstudio.gooutpls.core.BlacklistJsonCodec;
 import com.menghanstudio.gooutpls.core.BlacklistRepository;
+import com.menghanstudio.gooutpls.core.CleanupMode;
 import com.menghanstudio.gooutpls.core.DeviceOwnerTools;
 import com.menghanstudio.gooutpls.core.EventEntry;
 import com.menghanstudio.gooutpls.core.EventRepository;
 import com.menghanstudio.gooutpls.core.GuardEngine;
+import com.menghanstudio.gooutpls.core.ShizukuManager;
 import com.menghanstudio.gooutpls.service.MonitorService;
 import com.menghanstudio.gooutpls.service.ScanJobService;
 import com.menghanstudio.gooutpls.ui.BaseActivity;
@@ -53,12 +55,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import rikka.shizuku.Shizuku;
+
 public class MainActivity extends BaseActivity {
 
     private static final String TAG = "FuckOffJson";
     private static final int REQUEST_NOTIFICATIONS = 7001;
     private static final int REQUEST_EXPORT_JSON = 7101;
     private static final int REQUEST_IMPORT_JSON = 7102;
+    private static final int REQUEST_SHIZUKU = 7201;
     private static final int MAX_IMPORT_BYTES = 2 * 1024 * 1024;
 
     private boolean binding;
@@ -71,6 +76,7 @@ public class MainActivity extends BaseActivity {
     private TextView tvModeBadge;
     private TextView tvAutoState;
     private TextView tvAutoDesc;
+    private TextView btnCleanupMode;
     private TextView tvCountBlacklist;
     private TextView tvCountPending;
     private TextView tvCountRemoved;
@@ -83,6 +89,7 @@ public class MainActivity extends BaseActivity {
     private View cardEmptyBlacklist;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private Shizuku.OnRequestPermissionResultListener shizukuPermissionListener;
 
     private final BroadcastReceiver eventsReceiver = new BroadcastReceiver() {
         @Override
@@ -100,7 +107,37 @@ public class MainActivity extends BaseActivity {
         setupListeners();
         constrainDockButton();
         tvFooter.setText(getString(R.string.footer, BuildConfig.VERSION_NAME));
+        registerShizukuPermissionListener();
         refreshUi();
+    }
+
+    private void registerShizukuPermissionListener() {
+        try {
+            shizukuPermissionListener = (requestCode, grantResult) -> {
+                if (requestCode != REQUEST_SHIZUKU) {
+                    return;
+                }
+                if (grantResult == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, R.string.shizuku_permission_granted,
+                            Toast.LENGTH_SHORT).show();
+                }
+                refreshUi();
+            };
+            Shizuku.addRequestPermissionResultListener(shizukuPermissionListener);
+        } catch (Throwable ignored) {
+            shizukuPermissionListener = null;
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (shizukuPermissionListener != null) {
+            try {
+                Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener);
+            } catch (Throwable ignored) {
+            }
+        }
+        super.onDestroy();
     }
 
     private void bindViews() {
@@ -111,6 +148,7 @@ public class MainActivity extends BaseActivity {
         tvModeBadge = findViewById(R.id.tvModeBadge);
         tvAutoState = findViewById(R.id.tvAutoState);
         tvAutoDesc = findViewById(R.id.tvAutoDesc);
+        btnCleanupMode = findViewById(R.id.btnCleanupMode);
         tvCountBlacklist = findViewById(R.id.tvCountBlacklist);
         tvCountPending = findViewById(R.id.tvCountPending);
         tvCountRemoved = findViewById(R.id.tvCountRemoved);
@@ -161,12 +199,24 @@ public class MainActivity extends BaseActivity {
                 refreshUi();
                 return;
             }
-            if (!DeviceOwnerTools.isDeviceOwner(this)) {
+            String cleanupMode = AppPrefs.getCleanupMode(this);
+            if (CleanupMode.isManual(cleanupMode)) {
+                binding = true;
+                switchAuto.setChecked(false);
+                binding = false;
+                showCleanupModeDialog();
+                return;
+            }
+            if (!CleanupMode.isAvailable(this)) {
                 binding = true;
                 switchAuto.setChecked(false);
                 binding = false;
                 refreshUi();
-                startActivity(new Intent(this, DeviceOwnerActivity.class));
+                if (CleanupMode.isShizuku(cleanupMode)) {
+                    showShizukuSetupDialog();
+                } else {
+                    startActivity(new Intent(this, DeviceOwnerActivity.class));
+                }
                 return;
             }
             int installed = countAutoEligibleInstalledBlacklist();
@@ -188,9 +238,83 @@ public class MainActivity extends BaseActivity {
         findViewById(R.id.btnImportTop).setOnClickListener(v -> requestImport());
         findViewById(R.id.btnSafetyRules).setOnClickListener(v ->
                 startActivity(new Intent(this, SafetyRulesActivity.class)));
-        tvModeBadge.setOnClickListener(v -> openOwnerScreen());
-        btnOwner.setOnClickListener(v -> openOwnerScreen());
+        btnCleanupMode.setOnClickListener(v -> showCleanupModeDialog());
+        tvModeBadge.setOnClickListener(v -> showCleanupModeDialog());
+        btnOwner.setOnClickListener(v -> openProviderSettings());
         btnClearLog.setOnClickListener(v -> confirmClearLog());
+    }
+
+    private void openProviderSettings() {
+        String cleanupMode = AppPrefs.getCleanupMode(this);
+        if (CleanupMode.isShizuku(cleanupMode)) {
+            showShizukuSetupDialog();
+        } else if (CleanupMode.isManual(cleanupMode)) {
+            showCleanupModeDialog();
+        } else {
+            startActivity(new Intent(this, DeviceOwnerActivity.class));
+        }
+    }
+
+    private String cleanupModeLabel(String mode) {
+        if (CleanupMode.isShizuku(mode)) {
+            return getString(R.string.cleanup_mode_shizuku_short);
+        }
+        if (CleanupMode.isManual(mode)) {
+            return getString(R.string.cleanup_mode_manual_short);
+        }
+        return getString(R.string.cleanup_mode_device_owner_short);
+    }
+
+    private void showCleanupModeDialog() {
+        String current = AppPrefs.getCleanupMode(this);
+        String[] choices = new String[]{
+                getString(R.string.cleanup_mode_manual),
+                getString(R.string.cleanup_mode_device_owner),
+                getString(R.string.cleanup_mode_shizuku)
+        };
+        int checked = CleanupMode.isShizuku(current) ? 2
+                : (CleanupMode.isManual(current) ? 0 : 1);
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.cleanup_mode_title)
+                .setSingleChoiceItems(choices, checked, (dialog, which) -> {
+                    String selected = which == 0 ? CleanupMode.MANUAL
+                            : (which == 1 ? CleanupMode.DEVICE_OWNER : CleanupMode.SHIZUKU);
+                    AppPrefs.setCleanupMode(this, selected);
+                    AppPrefs.setAutoUninstallEnabled(this, false);
+                    dialog.dismiss();
+                    refreshUi();
+                    if (CleanupMode.isShizuku(selected) && !ShizukuManager.canUse()) {
+                        showShizukuSetupDialog();
+                    } else if (CleanupMode.DEVICE_OWNER.equals(selected)
+                            && !DeviceOwnerTools.isDeviceOwner(this)) {
+                        startActivity(new Intent(this, DeviceOwnerActivity.class));
+                    }
+                })
+                .setNegativeButton(R.string.action_cancel, null)
+                .show();
+    }
+
+    private void showShizukuSetupDialog() {
+        String message;
+        if (!ShizukuManager.isInstalled(this)) {
+            message = getString(R.string.shizuku_setup_not_installed);
+        } else if (!ShizukuManager.isBinderAvailable()) {
+            message = getString(R.string.shizuku_setup_not_running);
+        } else {
+            message = getString(R.string.shizuku_setup_no_permission);
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle(R.string.shizuku_setup_title)
+                .setMessage(message)
+                .setNegativeButton(R.string.action_cancel, null)
+                .setPositiveButton(R.string.shizuku_open, (dialog, which) ->
+                        ShizukuManager.open(this));
+        if (ShizukuManager.isBinderAvailable() && !ShizukuManager.hasPermission()) {
+            builder.setNeutralButton(R.string.shizuku_request_permission,
+                    (dialog, which) ->
+                            ShizukuManager.requestPermission(REQUEST_SHIZUKU));
+        }
+        builder.show();
     }
 
     private void requestNotificationPermission() {
@@ -243,7 +367,10 @@ public class MainActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         boolean owner = DeviceOwnerTools.isDeviceOwner(this);
-        if (!owner && AppPrefs.isAutoUninstallEnabled(this)) {
+        String cleanupMode = AppPrefs.getCleanupMode(this);
+        if (AppPrefs.isAutoUninstallEnabled(this)
+                && (CleanupMode.isManual(cleanupMode)
+                || (CleanupMode.DEVICE_OWNER.equals(cleanupMode) && !owner))) {
             AppPrefs.setAutoUninstallEnabled(this, false);
         }
         DeviceOwnerTools.syncOwnerState(this);
@@ -509,14 +636,21 @@ public class MainActivity extends BaseActivity {
     private void refreshUi() {
         boolean owner = DeviceOwnerTools.isDeviceOwner(this);
         boolean monitoring = AppPrefs.isMonitoringEnabled(this);
-        boolean auto = AppPrefs.isAutoUninstallEnabled(this) && owner;
+        String cleanupMode = AppPrefs.getCleanupMode(this);
+        boolean manualMode = CleanupMode.isManual(cleanupMode);
+        boolean shizukuMode = CleanupMode.isShizuku(cleanupMode);
+        boolean auto = AppPrefs.isAutoUninstallEnabled(this)
+                && CleanupMode.isAvailable(this);
 
         binding = true;
         try {
             switchMonitor.setChecked(monitoring);
             switchAuto.setChecked(auto);
-            switchAuto.setEnabled(owner);
-            switchAuto.setAlpha(owner ? 1f : 0.45f);
+            boolean switchAutoEnabled = !manualMode
+                    && (!CleanupMode.DEVICE_OWNER.equals(cleanupMode) || owner)
+                    && (!shizukuMode || ShizukuManager.isInstalled(this));
+            switchAuto.setEnabled(switchAutoEnabled);
+            switchAuto.setAlpha(switchAutoEnabled ? 1f : 0.45f);
 
             tvStatusTitle.setText(monitoring ? R.string.status_on : R.string.status_off);
             tvStatusTitle.setTextColor(getColor(monitoring ? R.color.teal : R.color.text));
@@ -528,7 +662,34 @@ public class MainActivity extends BaseActivity {
                     ? R.drawable.bg_chip_accent : R.drawable.bg_chip_neutral);
             tvModeBadge.setTextColor(getColor(auto ? R.color.accent : R.color.text_soft));
 
-            if (!owner) {
+            btnCleanupMode.setText(getString(
+                    R.string.cleanup_mode_value, cleanupModeLabel(cleanupMode)));
+
+            if (manualMode) {
+                tvAutoState.setText(R.string.auto_state_manual);
+                tvAutoState.setTextColor(getColor(R.color.text_muted));
+                tvAutoDesc.setText(R.string.auto_desc_manual_mode);
+                btnOwner.setText(R.string.cleanup_mode_title);
+            } else if (shizukuMode) {
+                if (!ShizukuManager.isBinderAvailable()) {
+                    tvAutoState.setText(R.string.auto_state_shizuku_missing);
+                    tvAutoState.setTextColor(getColor(R.color.amber));
+                    tvAutoDesc.setText(R.string.auto_desc_shizuku_missing);
+                } else if (!ShizukuManager.hasPermission()) {
+                    tvAutoState.setText(R.string.auto_state_shizuku_permission);
+                    tvAutoState.setTextColor(getColor(R.color.amber));
+                    tvAutoDesc.setText(R.string.auto_desc_shizuku_permission);
+                } else if (auto) {
+                    tvAutoState.setText(R.string.auto_state_on);
+                    tvAutoState.setTextColor(getColor(R.color.teal));
+                    tvAutoDesc.setText(R.string.auto_desc_shizuku_on);
+                } else {
+                    tvAutoState.setText(R.string.auto_state_off);
+                    tvAutoState.setTextColor(getColor(R.color.text_muted));
+                    tvAutoDesc.setText(R.string.auto_desc_shizuku_off);
+                }
+                btnOwner.setText(R.string.auto_shizuku_settings);
+            } else if (!owner) {
                 tvAutoState.setText(R.string.auto_state_locked);
                 tvAutoState.setTextColor(getColor(R.color.amber));
                 tvAutoDesc.setText(R.string.auto_requires_owner);
@@ -563,7 +724,7 @@ public class MainActivity extends BaseActivity {
                     installed.size() - protectedInstalled.size()));
             tvCountRemoved.setText(String.valueOf(AppPrefs.getRemovedCount(this)));
 
-            rebuildBlacklist(entries, installed, protectedInstalled, owner, auto);
+            rebuildBlacklist(entries, installed, protectedInstalled, auto);
             rebuildEvents();
         } finally {
             binding = false;
@@ -571,7 +732,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void rebuildBlacklist(List<BlacklistEntry> entries, Set<String> installedPackages,
-                                  Set<String> protectedInstalled, boolean owner, boolean auto) {
+                                  Set<String> protectedInstalled, boolean auto) {
         blacklistContainer.removeAllViews();
         cardEmptyBlacklist.setVisibility(entries.isEmpty() ? View.VISIBLE : View.GONE);
 
@@ -629,7 +790,7 @@ public class MainActivity extends BaseActivity {
 
             uninstall.setVisibility(installed && !protectedApp ? View.VISIBLE : View.GONE);
             uninstall.setOnClickListener(v -> showUninstallDialog(
-                    entry.packageName, entry.displayLabel(), entry.mode, owner, auto));
+                    entry.packageName, entry.displayLabel(), entry.mode, auto));
             remove.setOnClickListener(v -> confirmRemove(entry));
 
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -716,7 +877,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void showUninstallDialog(String packageName, String label, String mode,
-                                     boolean owner, boolean auto) {
+                                     boolean auto) {
         if (!AppCatalog.isInstalled(this, packageName)) {
             Toast.makeText(this, R.string.toast_not_installed, Toast.LENGTH_SHORT).show();
             refreshUi();
@@ -727,8 +888,7 @@ public class MainActivity extends BaseActivity {
             refreshUi();
             return;
         }
-        boolean autoActive = owner && auto
-                && BlacklistEntry.MODE_SYSTEM.equals(mode);
+        boolean autoActive = auto && BlacklistEntry.MODE_SYSTEM.equals(mode);
         String message = autoActive
                 ? getString(R.string.confirm_auto_uninstall_msg, label)
                 : getString(R.string.confirm_uninstall_msg, label);

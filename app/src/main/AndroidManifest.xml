@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
 
     <application
         android:name=".GoOutApp"
@@ -117,5 +118,13 @@
         <receiver
             android:name=".receiver.NotificationActionReceiver"
             android:exported="false" />
+
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:enabled="true"
+            android:exported="true"
+            android:multiprocess="false"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
     </application>
 </manifest>

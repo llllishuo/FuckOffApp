@@ -106,9 +106,10 @@ public final class GuardEngine {
                 return;
             }
 
+            String cleanupMode = AppPrefs.getCleanupMode(context);
             boolean auto = entry.followsSystem()
                     && AppPrefs.isAutoUninstallEnabled(context)
-                    && DeviceOwnerTools.isDeviceOwner(context);
+                    && CleanupMode.isAvailable(context);
             if (auto) {
                 if (AppPrefs.hasPendingAuto(context, entry.packageName)) {
                     return;
@@ -124,7 +125,13 @@ public final class GuardEngine {
                 if (force) {
                     AppPrefs.clearAutoFailure(context, entry.packageName);
                 }
-                startAutoUninstallLocked(context, entry.packageName, entry.displayLabel());
+                if (CleanupMode.isShizuku(cleanupMode)) {
+                    startShizukuUninstallLocked(context, entry.packageName,
+                            entry.displayLabel());
+                } else {
+                    startAutoUninstallLocked(context, entry.packageName,
+                            entry.displayLabel());
+                }
             } else {
                 boolean shouldPrompt = force
                         || AppPrefs.shouldShowAlert(context, entry.packageName);
@@ -156,15 +163,51 @@ public final class GuardEngine {
             if (entry != null && entry.isManual()) {
                 return false;
             }
+            String cleanupMode = AppPrefs.getCleanupMode(app);
             if (!AppPrefs.isAutoUninstallEnabled(app)
-                    || !DeviceOwnerTools.isDeviceOwner(app)) {
+                    || !CleanupMode.isAvailable(app)) {
                 return false;
             }
             if (AppPrefs.hasPendingAuto(app, packageName)) {
                 return true;
             }
+            if (CleanupMode.isShizuku(cleanupMode)) {
+                return startShizukuUninstallLocked(app, packageName, label);
+            }
             return startAutoUninstallLocked(app, packageName, label);
         }
+    }
+
+    private static boolean startShizukuUninstallLocked(Context context, String packageName,
+                                                       String label) {
+        if (!AppCatalog.isSafeTarget(context, packageName)
+                || AppSafetyGuard.isProtected(context, packageName)) {
+            return false;
+        }
+        AppPrefs.markPendingAuto(context, packageName);
+        ShizukuManager.uninstall(context, packageName, (success, output) -> {
+            Context app = context.getApplicationContext();
+            synchronized (LOCK) {
+                String safe = safeLabel(app, packageName, label);
+                if (success) {
+                    if (AppPrefs.hasPendingAuto(app, packageName)) {
+                        finalizeAutoSuccessLocked(app, packageName, safe);
+                    }
+                    return;
+                }
+                if (!AppPrefs.hasPendingAuto(app, packageName)) {
+                    return;
+                }
+                AppPrefs.clearPendingAuto(app, packageName);
+                AppPrefs.markAutoFailed(app, packageName);
+                String reason = app.getString(R.string.reason_shizuku_failed,
+                        output == null || output.trim().isEmpty() ? "unknown" : output.trim());
+                EventRepository.add(app, EventRepository.TYPE_AUTO_FAIL, packageName,
+                        app.getString(R.string.event_auto_fail, safe, reason));
+                NotificationHelperCompat.showDetection(app, packageName, safe, true, true);
+            }
+        });
+        return true;
     }
 
     private static boolean startAutoUninstallLocked(Context context, String packageName,

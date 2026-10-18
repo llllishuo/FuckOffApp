@@ -23,7 +23,7 @@ import com.menghanstudio.gooutpls.core.AppCatalog;
 import com.menghanstudio.gooutpls.core.AppPrefs;
 import com.menghanstudio.gooutpls.core.BlacklistEntry;
 import com.menghanstudio.gooutpls.core.BlacklistRepository;
-import com.menghanstudio.gooutpls.core.DeviceOwnerTools;
+import com.menghanstudio.gooutpls.core.CleanupMode;
 import com.menghanstudio.gooutpls.core.EventRepository;
 import com.menghanstudio.gooutpls.core.GuardEngine;
 import com.menghanstudio.gooutpls.core.InstalledApp;
@@ -182,7 +182,7 @@ public class AppPickerActivity extends BaseActivity {
 
         boolean autoClean = AppPrefs.isMonitoringEnabled(this)
                 && AppPrefs.isAutoUninstallEnabled(this)
-                && DeviceOwnerTools.isDeviceOwner(this);
+                && CleanupMode.isAvailable(this);
         if (autoClean) {
             showAutoCleanWarning(chosen);
         } else {

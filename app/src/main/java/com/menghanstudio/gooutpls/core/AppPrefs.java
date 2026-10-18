@@ -13,6 +13,7 @@ public final class AppPrefs {
     private static final String FILE = "gooutpls_prefs";
     private static final String KEY_MONITORING = "monitoring_enabled";
     private static final String KEY_AUTO = "auto_uninstall_enabled";
+    private static final String KEY_CLEANUP_MODE = "cleanup_mode";
     private static final String KEY_OWNER_LOGGED = "owner_ready_logged";
     private static final String KEY_REMOVED_COUNT = "removed_count";
 
@@ -49,6 +50,17 @@ public final class AppPrefs {
 
     public static void setAutoUninstallEnabled(Context context, boolean enabled) {
         prefs(context).edit().putBoolean(KEY_AUTO, enabled).apply();
+    }
+
+    public static String getCleanupMode(Context context) {
+        return CleanupMode.normalize(
+                prefs(context).getString(KEY_CLEANUP_MODE, CleanupMode.DEVICE_OWNER));
+    }
+
+    public static void setCleanupMode(Context context, String mode) {
+        prefs(context).edit()
+                .putString(KEY_CLEANUP_MODE, CleanupMode.normalize(mode))
+                .apply();
     }
 
     public static boolean wasOwnerReadyLogged(Context context) {

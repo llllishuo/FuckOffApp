@@ -6,17 +6,21 @@
 - 运行：MEmu 逍遥模拟器，Android 9（API 28），x86_64，900×1600（竖屏）
 - 权限：通过 `adb shell dpm set-device-owner` 配置为 Device Owner
 - 应用显示名：FuckOff（包名仍为 `com.menghanstudio.gooutpls`）
-- 测试对象：FuckOff v1.3.4 release APK（debug key 签名）
-- 最终 APK：`FuckOff-v1.3.4.apk`，380,016 bytes，SHA-256 `bf483c57ccc0609ba41906b2f174bcc6564b2be159bdd6211ff4b417729fdcd4`
+- 测试对象：FuckOff v1.4.0 release APK（debug key 签名）
+- 最终 APK：`FuckOff-v1.4.0.apk`，1,014,360 bytes，SHA-256 `fb06a6756c598a2af0093ad01130a46bab52326f98ea8519547ef73ab6daab6b`
 - 测试用“黑名单应用”：`...blacklist.victim`、`...blacklist.victim2`
-- Lua 运行时：LuaJ 3.0.1，仅加载 Base/Package/Table/String/Math 库；许可证文本随 APK assets 一起分发
+- Lua 运行时：LuaJ 3.0.1，仅加载 Base/Package/Table/String/Math 库
+- Shizuku 依赖：Shizuku API/AIDL/Provider 13.1.5；测试机未安装 Shizuku
 
 ## 已验证
 
 | 项目 | 结果 |
 | --- | --- |
 | Debug / Release 构建 | 通过 |
-| 荣耀 Magic8 Pro（BKQ-AN90，Android 16 / MagicOS 10）冷启动 | 通过；v1.3.4 可进入首页 |
+| 荣耀 Magic8 Pro（BKQ-AN90，Android 16 / MagicOS 10）冷启动 | 通过；v1.4.0 可进入首页 |
+| 清理方式选择 | 通过；手动 / Device Owner / Shizuku 三种模式可切换 |
+| Shizuku 未安装时的引导 | 通过；显示安装、无线调试和授权说明，不崩溃 |
+| Shizuku 实际卸载 | 未验证；测试机未安装/启动 Shizuku，代码路径已编译，需实机授权后验证 |
 | Android Lint | 0 errors |
 | APK 安装并通过 v2 签名校验 | 通过 |
 | Device Owner 配置 | 通过 |
@@ -35,7 +39,7 @@
 | 应用内取消 Device Owner | 通过，同时移除 Active Admin |
 | 无 `INTERNET` 权限 | 通过 |
 | 开源许可文件 | 通过；根目录 `LICENSE`/`NOTICE` 与 APK `assets/LICENSE.txt`/`NOTICE.txt` 一致 |
-| 关于信息 | 通过；版本 1.3.4，作者、Apache-2.0、GitHub 链接、Bilibili、QQ 显示正确 |
+| 关于信息 | 通过；版本 1.4.0，作者、Apache-2.0、GitHub 链接、Bilibili、QQ 显示正确 |
 
 ## 自定义规则安全边界
 
@@ -45,6 +49,13 @@
 - Lua 环境移除了 `os`、`io`、`package`、`load`、`loadfile`、`dofile`、`require`、`debug`、`luajava`；字符串库移除了 `rep`、`char`、`format`、`dump`。
 - 规则数量上限 50，表达式上限 800 字符；规则读取/编译/执行异常只跳过该条，不影响 App 或基础审查。
 - 规则只保存在本机，**不随黑名单 JSON 导出/导入**。
+
+## Shizuku 高级清理说明
+
+- 清理方式在首页「自动处理」卡片中选择；Shizuku 模式不需要 Device Owner。
+- Shizuku 服务未运行、未授权或命令失败时，GuardEngine 会自动回退到手动通知。
+- 实际命令为固定的 `pm uninstall --user 0 <包名>`，包名经过字符校验，不执行任意用户输入的命令。
+- 本次测试环境未安装 Shizuku，因此只验证了 UI 引导、模式切换、权限请求入口和回退路径；实际 shell 卸载需要在安装 Shizuku 后复测。
 
 ## 荣耀 Android 16 启动问题
 

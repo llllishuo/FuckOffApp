@@ -40,9 +40,9 @@
     <string name="empty_blacklist_desc">添加你不想留在手机上的应用。\nFuckOff 只在应用出现时采取行动。</string>
     <string name="empty_events">还没有记录。发现或清理应用后会显示在这里。</string>
 
-    <string name="auto_title">自动卸载</string>
+    <string name="auto_title">自动处理</string>
     <string name="auto_state_on">自动模式 · 已开启</string>
-    <string name="auto_state_off">手动确认</string>
+    <string name="auto_state_off">自动处理已关闭</string>
     <string name="auto_desc_on">设备所有者已就绪。跟随系统的黑名单应用会被静默卸载；仅手动项始终由你确认。</string>
     <string name="auto_desc_off">关闭后，将改为通知你手动确认卸载。</string>
     <string name="auto_requires_owner">需要「设备所有者」权限才能静默卸载。未配置时使用手动确认。</string>
@@ -51,8 +51,8 @@
     <string name="auto_owner_lost">设备所有者权限已失效，自动卸载暂停。</string>
 
     <string name="auto_state_locked">需要设备所有者</string>
-    <string name="enable_auto_title">开启自动卸载？</string>
-    <string name="enable_auto_msg">已安装的 %1$d 个跟随系统的黑名单应用会被立即卸载。仅手动项不会自动清理。</string>
+    <string name="enable_auto_title">开启自动处理？</string>
+    <string name="enable_auto_msg">已安装的 %1$d 个跟随系统的黑名单应用会被自动处理。仅手动项不会自动清理。</string>
 
     <string name="recent_title">最近动态</string>
     <string name="footer">FuckOff v%1$s  ·  数据只保存在本机  ·  无网络权限</string>
@@ -74,8 +74,8 @@
     <string name="toast_removed">已移出黑名单</string>
     <string name="toast_monitor_on">守护已开启</string>
     <string name="toast_monitor_off">守护已暂停</string>
-    <string name="toast_auto_on">自动卸载已开启</string>
-    <string name="toast_auto_off">已切换为手动确认</string>
+    <string name="toast_auto_on">自动处理已开启</string>
+    <string name="toast_auto_off">已关闭自动处理</string>
     <string name="toast_do_ready">设备所有者已生效</string>
     <string name="toast_do_not_ready">尚未配置设备所有者</string>
     <string name="toast_command_copied">命令已复制</string>
@@ -266,4 +266,32 @@
     <string name="about_repo">开源地址：https://github.com/llllishuo/FuckOffApp</string>
     <string name="about_bilibili">Bilibili：StudioMenghan</string>
     <string name="about_qq">QQ：1756524586</string>
+
+    <string name="cleanup_mode_title">清理方式</string>
+    <string name="cleanup_mode_manual">手动确认（只发通知）</string>
+    <string name="cleanup_mode_device_owner">Device Owner 自动卸载</string>
+    <string name="cleanup_mode_shizuku">Shizuku 自动卸载</string>
+    <string name="cleanup_mode_value">清理方式：%1$s →</string>
+    <string name="cleanup_mode_manual_short">手动确认</string>
+    <string name="cleanup_mode_device_owner_short">Device Owner</string>
+    <string name="cleanup_mode_shizuku_short">Shizuku</string>
+    <string name="auto_state_manual">手动确认</string>
+    <string name="auto_desc_manual_mode">不会自动处理，只在发现黑名单应用时发通知。</string>
+    <string name="auto_state_shizuku_missing">Shizuku 未运行</string>
+    <string name="auto_desc_shizuku_missing">安装并启动 Shizuku 后，可开启 Shizuku 自动卸载。当前仍会使用手动通知。</string>
+    <string name="auto_state_shizuku_permission">Shizuku 未授权</string>
+    <string name="auto_desc_shizuku_permission">已检测到 Shizuku，请授予本应用权限后再开启自动处理。</string>
+    <string name="auto_desc_shizuku_on">Shizuku 已就绪。跟随系统的黑名单应用会被静默卸载；仅手动项始终由你确认。</string>
+    <string name="auto_desc_shizuku_off">开启后，将通过 Shizuku 静默卸载跟随系统的黑名单应用。</string>
+    <string name="auto_shizuku_settings">配置 Shizuku →</string>
+    <string name="auto_mode_do">Device Owner 自动卸载</string>
+    <string name="auto_mode_shizuku">Shizuku 自动卸载</string>
+    <string name="shizuku_setup_title">配置 Shizuku</string>
+    <string name="shizuku_setup_not_installed">未检测到 Shizuku。\n\n1. 安装 Shizuku\n2. 开启开发者选项和无线调试\n3. 按 Shizuku 指引启动服务\n4. 回到 FuckOff 选择 Shizuku 清理方式</string>
+    <string name="shizuku_setup_not_running">Shizuku 已安装但尚未运行。\n\n请打开 Shizuku，按应用内指引通过无线调试启动服务，然后回到 FuckOff 申请权限。</string>
+    <string name="shizuku_setup_no_permission">Shizuku 正在运行，但 FuckOff 尚未获得权限。点击“申请权限”并在 Shizuku 弹窗中允许。</string>
+    <string name="shizuku_open">打开 Shizuku</string>
+    <string name="shizuku_request_permission">申请权限</string>
+    <string name="shizuku_permission_granted">Shizuku 权限已授予</string>
+    <string name="reason_shizuku_failed">Shizuku 卸载失败：%1$s</string>
 </resources>

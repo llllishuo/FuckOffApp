@@ -11,8 +11,8 @@ android {
         applicationId "com.menghanstudio.gooutpls"
         minSdk 26
         targetSdk 35
-        versionCode 8
-        versionName "1.3.4"
+        versionCode 9
+        versionName "1.4.0"
     }
 
     buildTypes {
@@ -47,5 +47,9 @@ android {
 
 dependencies {
     implementation 'org.luaj:luaj-jse:3.0.1'
+    implementation 'dev.rikka.shizuku:api:13.1.5'
+    implementation 'dev.rikka.shizuku:aidl:13.1.5'
+    implementation 'dev.rikka.shizuku:provider:13.1.5'
+    implementation 'androidx.annotation:annotation:1.9.1'
     // LuaJ is bundled only for user-authored local protection expressions.
 }

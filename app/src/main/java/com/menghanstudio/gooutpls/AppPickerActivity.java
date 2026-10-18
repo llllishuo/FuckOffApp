@@ -31,8 +31,10 @@ import com.menghanstudio.gooutpls.service.MonitorService;
 import com.menghanstudio.gooutpls.ui.BaseActivity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,6 +44,7 @@ public class AppPickerActivity extends BaseActivity {
     private final List<InstalledApp> allApps = new ArrayList<>();
     private final List<InstalledApp> filteredApps = new ArrayList<>();
     private final Set<String> selected = new HashSet<>();
+    private final Map<String, android.graphics.drawable.Drawable> iconCache = new HashMap<>();
 
     private ExecutorService executor;
     private AppAdapter adapter;
@@ -297,7 +300,13 @@ public class AppPickerActivity extends BaseActivity {
             InstalledApp app = filteredApps.get(position);
             holder.name.setText(app.displayLabel());
             holder.pkg.setText(app.packageName);
-            Drawable icon = app.icon;
+            Drawable icon = iconCache.get(app.packageName);
+            if (icon == null) {
+                icon = AppCatalog.iconFor(AppPickerActivity.this, app.packageName);
+                if (icon != null) {
+                    iconCache.put(app.packageName, icon);
+                }
+            }
             if (icon != null) {
                 holder.icon.setImageDrawable(icon);
             } else {

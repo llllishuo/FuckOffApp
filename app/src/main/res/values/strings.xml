@@ -294,4 +294,21 @@
     <string name="shizuku_request_permission">申请权限</string>
     <string name="shizuku_permission_granted">Shizuku 权限已授予</string>
     <string name="reason_shizuku_failed">Shizuku 卸载失败：%1$s</string>
+
+    <string name="cleanup_mode_accessibility">无障碍模拟确认（半自动）</string>
+    <string name="cleanup_mode_accessibility_short">无障碍模拟</string>
+    <string name="auto_state_accessibility">无障碍辅助</string>
+    <string name="auto_desc_accessibility_on">点通知进入系统卸载界面后，无障碍服务会自动点击确认。</string>
+    <string name="auto_desc_accessibility_off">需要先开启 FuckOff 的无障碍服务，之后点通知即可自动确认卸载。</string>
+    <string name="accessibility_settings">配置无障碍 →</string>
+    <string name="accessibility_setup_title">配置无障碍确认</string>
+    <string name="accessibility_setup_steps">1. 打开系统无障碍设置\n2. 找到「FuckOff 无障碍确认」\n3. 若开关灰色：应用信息 → FuckOff → ⋮ → 允许受限设置\n4. 开启服务并允许\n5. 返回 FuckOff 选择无障碍清理方式</string>
+    <string name="accessibility_service_enabled">无障碍服务已启用。\n\n发现黑名单应用后先点通知，进入系统卸载界面，服务会自动点击卸载确认。</string>
+    <string name="accessibility_open">打开无障碍设置</string>
+    <string name="accessibility_service_label">FuckOff 无障碍确认</string>
+    <string name="accessibility_service_desc">仅用于自动确认由 FuckOff 发起的系统卸载弹窗。不会读取其他应用界面，也不会自动卸载未在 FuckOff 中排队的应用。</string>
+
+    <string name="device_owner_setup_title">配置 Device Owner</string>
+    <string name="device_owner_setup_steps">1. 打开设备所有者配置页\n2. 按页面提示通过 ADB 完成配置\n3. 返回 FuckOff 后开启自动处理</string>
+    <string name="device_owner_open_settings">打开配置页</string>
 </resources>

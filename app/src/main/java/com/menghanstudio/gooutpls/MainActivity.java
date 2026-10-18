@@ -38,6 +38,7 @@ import com.menghanstudio.gooutpls.core.EventEntry;
 import com.menghanstudio.gooutpls.core.EventRepository;
 import com.menghanstudio.gooutpls.core.GuardEngine;
 import com.menghanstudio.gooutpls.core.ShizukuManager;
+import com.menghanstudio.gooutpls.service.AccessibilityCleanupService;
 import com.menghanstudio.gooutpls.service.MonitorService;
 import com.menghanstudio.gooutpls.service.ScanJobService;
 import com.menghanstudio.gooutpls.ui.BaseActivity;
@@ -200,11 +201,16 @@ public class MainActivity extends BaseActivity {
                 return;
             }
             String cleanupMode = AppPrefs.getCleanupMode(this);
-            if (CleanupMode.isManual(cleanupMode)) {
+            if (CleanupMode.isManual(cleanupMode)
+                    || CleanupMode.isAccessibility(cleanupMode)) {
                 binding = true;
                 switchAuto.setChecked(false);
                 binding = false;
-                showCleanupModeDialog();
+                if (CleanupMode.isAccessibility(cleanupMode)) {
+                    showAccessibilitySetupDialog();
+                } else {
+                    showCleanupModeDialog();
+                }
                 return;
             }
             if (!CleanupMode.isAvailable(this)) {
@@ -248,16 +254,33 @@ public class MainActivity extends BaseActivity {
         String cleanupMode = AppPrefs.getCleanupMode(this);
         if (CleanupMode.isShizuku(cleanupMode)) {
             showShizukuSetupDialog();
+        } else if (CleanupMode.isAccessibility(cleanupMode)) {
+            showAccessibilitySetupDialog();
         } else if (CleanupMode.isManual(cleanupMode)) {
             showCleanupModeDialog();
+        } else if (!DeviceOwnerTools.isDeviceOwner(this)) {
+            showDeviceOwnerSetupDialog();
         } else {
             startActivity(new Intent(this, DeviceOwnerActivity.class));
         }
     }
 
+    private void showDeviceOwnerSetupDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.device_owner_setup_title)
+                .setMessage(R.string.device_owner_setup_steps)
+                .setNegativeButton(R.string.action_cancel, null)
+                .setPositiveButton(R.string.device_owner_open_settings, (dialog, which) ->
+                        startActivity(new Intent(this, DeviceOwnerActivity.class)))
+                .show();
+    }
+
     private String cleanupModeLabel(String mode) {
         if (CleanupMode.isShizuku(mode)) {
             return getString(R.string.cleanup_mode_shizuku_short);
+        }
+        if (CleanupMode.isAccessibility(mode)) {
+            return getString(R.string.cleanup_mode_accessibility_short);
         }
         if (CleanupMode.isManual(mode)) {
             return getString(R.string.cleanup_mode_manual_short);
@@ -270,27 +293,61 @@ public class MainActivity extends BaseActivity {
         String[] choices = new String[]{
                 getString(R.string.cleanup_mode_manual),
                 getString(R.string.cleanup_mode_device_owner),
-                getString(R.string.cleanup_mode_shizuku)
+                getString(R.string.cleanup_mode_shizuku),
+                getString(R.string.cleanup_mode_accessibility)
         };
-        int checked = CleanupMode.isShizuku(current) ? 2
-                : (CleanupMode.isManual(current) ? 0 : 1);
+        int checked;
+        if (CleanupMode.isShizuku(current)) {
+            checked = 2;
+        } else if (CleanupMode.isAccessibility(current)) {
+            checked = 3;
+        } else if (CleanupMode.isManual(current)) {
+            checked = 0;
+        } else {
+            checked = 1;
+        }
         new AlertDialog.Builder(this)
                 .setTitle(R.string.cleanup_mode_title)
                 .setSingleChoiceItems(choices, checked, (dialog, which) -> {
-                    String selected = which == 0 ? CleanupMode.MANUAL
-                            : (which == 1 ? CleanupMode.DEVICE_OWNER : CleanupMode.SHIZUKU);
+                    String selected;
+                    if (which == 0) {
+                        selected = CleanupMode.MANUAL;
+                    } else if (which == 1) {
+                        selected = CleanupMode.DEVICE_OWNER;
+                    } else if (which == 2) {
+                        selected = CleanupMode.SHIZUKU;
+                    } else {
+                        selected = CleanupMode.ACCESSIBILITY;
+                    }
                     AppPrefs.setCleanupMode(this, selected);
                     AppPrefs.setAutoUninstallEnabled(this, false);
                     dialog.dismiss();
                     refreshUi();
                     if (CleanupMode.isShizuku(selected) && !ShizukuManager.canUse()) {
                         showShizukuSetupDialog();
+                    } else if (CleanupMode.isAccessibility(selected)
+                            && !AccessibilityCleanupService.isEnabled(this)) {
+                        showAccessibilitySetupDialog();
                     } else if (CleanupMode.DEVICE_OWNER.equals(selected)
                             && !DeviceOwnerTools.isDeviceOwner(this)) {
-                        startActivity(new Intent(this, DeviceOwnerActivity.class));
+                        showDeviceOwnerSetupDialog();
                     }
                 })
                 .setNegativeButton(R.string.action_cancel, null)
+                .show();
+    }
+
+    private void showAccessibilitySetupDialog() {
+        boolean enabled = AccessibilityCleanupService.isEnabled(this);
+        String message = enabled
+                ? getString(R.string.accessibility_service_enabled)
+                : getString(R.string.accessibility_setup_steps);
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.accessibility_setup_title)
+                .setMessage(message)
+                .setNegativeButton(R.string.action_cancel, null)
+                .setPositiveButton(R.string.accessibility_open, (dialog, which) ->
+                        AccessibilityCleanupService.openSettings(this))
                 .show();
     }
 
@@ -370,6 +427,7 @@ public class MainActivity extends BaseActivity {
         String cleanupMode = AppPrefs.getCleanupMode(this);
         if (AppPrefs.isAutoUninstallEnabled(this)
                 && (CleanupMode.isManual(cleanupMode)
+                || CleanupMode.isAccessibility(cleanupMode)
                 || (CleanupMode.DEVICE_OWNER.equals(cleanupMode) && !owner))) {
             AppPrefs.setAutoUninstallEnabled(this, false);
         }
@@ -639,6 +697,7 @@ public class MainActivity extends BaseActivity {
         String cleanupMode = AppPrefs.getCleanupMode(this);
         boolean manualMode = CleanupMode.isManual(cleanupMode);
         boolean shizukuMode = CleanupMode.isShizuku(cleanupMode);
+        boolean accessibilityMode = CleanupMode.isAccessibility(cleanupMode);
         boolean auto = AppPrefs.isAutoUninstallEnabled(this)
                 && CleanupMode.isAvailable(this);
 
@@ -646,7 +705,7 @@ public class MainActivity extends BaseActivity {
         try {
             switchMonitor.setChecked(monitoring);
             switchAuto.setChecked(auto);
-            boolean switchAutoEnabled = !manualMode
+            boolean switchAutoEnabled = !manualMode && !accessibilityMode
                     && (!CleanupMode.DEVICE_OWNER.equals(cleanupMode) || owner)
                     && (!shizukuMode || ShizukuManager.isInstalled(this));
             switchAuto.setEnabled(switchAutoEnabled);
@@ -670,6 +729,13 @@ public class MainActivity extends BaseActivity {
                 tvAutoState.setTextColor(getColor(R.color.text_muted));
                 tvAutoDesc.setText(R.string.auto_desc_manual_mode);
                 btnOwner.setText(R.string.cleanup_mode_title);
+            } else if (accessibilityMode) {
+                tvAutoState.setText(R.string.auto_state_accessibility);
+                tvAutoState.setTextColor(getColor(R.color.amber));
+                tvAutoDesc.setText(AccessibilityCleanupService.isEnabled(this)
+                        ? R.string.auto_desc_accessibility_on
+                        : R.string.auto_desc_accessibility_off);
+                btnOwner.setText(R.string.accessibility_settings);
             } else if (shizukuMode) {
                 if (!ShizukuManager.isBinderAvailable()) {
                     tvAutoState.setText(R.string.auto_state_shizuku_missing);

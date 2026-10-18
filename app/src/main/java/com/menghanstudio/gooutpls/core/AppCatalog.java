@@ -66,7 +66,7 @@ public final class AppCatalog {
         AppSafetyGuard.Snapshot safety = AppSafetyGuard.snapshot(context);
         for (ApplicationInfo info : installed) {
             if (!isSafeTarget(context, info)
-                    || safety.isProtected(context, info.packageName)) {
+                    || safety.isProtected(context, info.packageName, info)) {
                 continue;
             }
             String label;
@@ -75,13 +75,10 @@ public final class AppCatalog {
             } catch (Exception e) {
                 label = info.packageName;
             }
-            Drawable icon;
-            try {
-                icon = pm.getApplicationIcon(info);
-            } catch (Exception e) {
-                icon = null;
-            }
-            result.add(new InstalledApp(info.packageName, label, icon));
+            // Icons are loaded lazily by the picker adapter. Loading every
+            // app icon here made the first scan noticeably slower on devices
+            // with hundreds of installed packages.
+            result.add(new InstalledApp(info.packageName, label, null));
         }
 
         final Collator collator = Collator.getInstance(Locale.SIMPLIFIED_CHINESE);

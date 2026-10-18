@@ -10,6 +10,7 @@ public final class CleanupMode {
     public static final String MANUAL = "manual";
     public static final String DEVICE_OWNER = "device_owner";
     public static final String SHIZUKU = "shizuku";
+    public static final String ACCESSIBILITY = "accessibility";
 
     private CleanupMode() {
     }
@@ -17,6 +18,9 @@ public final class CleanupMode {
     public static String normalize(String value) {
         if (SHIZUKU.equals(value)) {
             return SHIZUKU;
+        }
+        if (ACCESSIBILITY.equals(value)) {
+            return ACCESSIBILITY;
         }
         if (MANUAL.equals(value)) {
             return MANUAL;
@@ -30,6 +34,10 @@ public final class CleanupMode {
 
     public static boolean isShizuku(String value) {
         return SHIZUKU.equals(normalize(value));
+    }
+
+    public static boolean isAccessibility(String value) {
+        return ACCESSIBILITY.equals(normalize(value));
     }
 
     public static boolean isAvailable(Context context) {

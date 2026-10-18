@@ -8,8 +8,8 @@ FuckOff 是一款 Android 黑名单应用清理器：你把自己选中的应用
 
 - 纯本地运行，**没有申请网络权限**
 - 只处理你主动加入黑名单的**用户应用**，不会碰系统应用
-- 无 root、无无障碍自动点击、无隐藏 API
-- 自动模式使用 Android 官方 `PackageInstaller.uninstall` 的 **Device Owner** 能力
+- 无 root、无隐藏 API；无障碍模拟为可选的半自动模式，需要用户手动开启服务
+- 自动模式使用 **Device Owner** 或 **Shizuku**；另有半自动的无障碍模拟确认
 - 基础审查固定启用；可按 Android 版本或机型添加受限 Lua 保护规则
 
 ## 界面预览
@@ -33,23 +33,25 @@ FuckOff 是一款 Android 黑名单应用清理器：你把自己选中的应用
 - 首页展示黑名单、待清理数量、已清理次数
 - 支持手动“卸载”或“移出黑名单”
 - 每个黑名单项可独立选择「跟随系统」或「仅手动」；新添加项默认跟随系统
-- 自动处理支持三种清理方式：手动通知、Device Owner 静默卸载、Shizuku 静默卸载
+- 清理方式支持：手动通知、Device Owner 静默卸载、Shizuku 静默卸载、无障碍模拟确认（半自动）
+- 应用列表改为按需加载图标，并减少重复的 PackageManager 查询，首次扫描更快
 - 黑名单支持 JSON 导出 / 导入（系统文件选择器，无需存储权限）
 - 安全保护：关键系统角色不会被卸载
 - 安全审查规则：基础审查固定，另可添加最多 50 条 Lua 表达式规则，按包名/Android 版本/品牌等增加保护
 
-### 两种执行模式
+### 执行模式
 
 | 模式 | 需要什么 | 行为 |
 | --- | --- | --- |
 | 手动模式 | 无 | 发现黑名单应用后发出通知，点按后进入系统卸载确认界面 |
 | 自动模式 | Device Owner 或 Shizuku | 对「跟随系统」的黑名单项使用所选引擎静默卸载；「仅手动」项始终确认 |
+| 无障碍辅助 | 开启 FuckOff 无障碍服务 | 点通知进入系统卸载界面后，由服务自动点击确认；半自动，不后台静默卸载 |
 
 > **普通 Android 应用无法静默卸载其他应用。** 自动处理需要 Device Owner 或 Shizuku：Device Owner 属于企业设备管理权限，通常需要恢复出厂或无账户环境；Shizuku 通过无线调试启动本地 shell，不需要 Device Owner，但仍属于进阶配置。两者都不可用时，手动模式仍然完整可用。
 
 
 
-### 自动处理引擎
+### 清理引擎
 
 在首页「自动处理」卡片中点击「清理方式」切换：
 
@@ -58,13 +60,15 @@ FuckOff 是一款 Android 黑名单应用清理器：你把自己选中的应用
 | 手动确认 | 无 | 只发通知，由你在系统界面确认卸载 |
 | Device Owner | 已配置 Device Owner | 使用系统 `PackageInstaller` 静默卸载 |
 | Shizuku | 已安装并启动 Shizuku，且已授权 FuckOff | 通过本地 shell 执行 `pm uninstall --user 0` 静默卸载 |
+| 无障碍模拟确认 | 已开启 FuckOff 无障碍服务 | 点通知/卸载后，系统卸载弹窗由无障碍服务自动点击确认 |
 
 - Shizuku 模式不需要 Device Owner，也不需要删除账户；
 - Shizuku 服务未运行或未授权时，FuckOff 会自动回退到手动通知；
 - 仅手动项始终不会被自动处理；
+- 无障碍模式是半自动：不会在后台直接静默卸载，仍需你先点通知或列表里的「卸载」；
 - Shizuku 是独立第三方应用，需要用户自行安装和启动。
 
-> 三种清理方式的权限、数据删除、配置门槛和风险见 [CLEANUP_RISKS.md](CLEANUP_RISKS.md)。
+> 四种清理方式的权限、数据删除、配置门槛和风险见 [CLEANUP_RISKS.md](CLEANUP_RISKS.md)。
 
 ### 每个应用的清理方式
 
@@ -135,10 +139,10 @@ sdk >= 31 and pkg:find("keyboard") ~= nil
 
 ## 安装
 
-构建产物位于本地项目根目录 `FuckOff-v1.4.0.apk`（按 `.gitignore` 规则不纳入 Git）。可通过 ADB 安装：
+构建产物位于本地项目根目录 `FuckOff-v1.5.0.apk`（按 `.gitignore` 规则不纳入 Git）。可通过 ADB 安装：
 
 ```bash
-adb install -r FuckOff-v1.4.0.apk
+adb install -r FuckOff-v1.5.0.apk
 ```
 
 重新构建时产物位于：
@@ -327,6 +331,7 @@ app/src/main/
 │   │   ├── AppCatalog.java            应用可见性、系统应用过滤
 │   │   ├── CleanupMode.java            手动/Device Owner/Shizuku 清理方式
 │   │   ├── ShizukuManager.java        Shizuku 权限与 shell 卸载
+│   │   ├── service/AccessibilityCleanupService.java  无障碍模拟确认
 │   │   ├── AppSafetyGuard.java        默认桌面/输入法/管理员等安全保护
 │   │   ├── RuleEngine.java            受限 Lua 表达式求值
 │   │   ├── RuleRepository.java        用户规则本地存储
@@ -358,17 +363,19 @@ installer.uninstall(packageName, statusPendingIntent.getIntentSender());
 
 ## 测试状态
 
-已在 Android 9（API 28）模拟器上完成 Device Owner、自动静默卸载、单项手动模式、自定义 Lua 规则（保存/开关/删除/按包名匹配/非法规则拒绝）、导入强制手动且不立即清理、通知手动卸载、后台安装检测、JSON 导出/导入和权限取消的端到端验证；并在 HONOR BKQ-AN90（Android 16 / MagicOS 10.0.0.170）冷启动验证 v1.4.0 可进入首页、清理方式选择与 Shizuku 配置引导；Lint 为 0 errors。Shizuku 实际卸载命令需要在安装并启动 Shizuku 后验证。详细记录见 [TESTING.md](TESTING.md)。Android 13+ 的运行时通知权限和 Android 14+ 的 `specialUse` 前台服务仅完成代码适配，未在对应版本真机上实测。
+已在 Android 9（API 28）模拟器上完成 Device Owner、自动静默卸载、单项手动模式、自定义 Lua 规则（保存/开关/删除/按包名匹配/非法规则拒绝）、导入强制手动且不立即清理、通知手动卸载、后台安装检测、JSON 导出/导入和权限取消的端到端验证；并在 HONOR BKQ-AN90（Android 16 / MagicOS 10.0.0.170）构建验证 v1.5.0；v1.4.0 曾在真机验证首页、清理方式与 Shizuku 引导。v1.5.0 的无障碍实际点击和 Shizuku 实际卸载仍需在安装/授权后验证；Lint 为 0 errors。详细记录见 [TESTING.md](TESTING.md)。Android 13+ 的运行时通知权限和 Android 14+ 的 `specialUse` 前台服务仅完成代码适配，未在对应版本真机上实测。
 
 ## 已知边界
 
-- **Device Owner 是硬门槛**：没有它就无法静默卸载第三方应用，这是 Android 的安全设计
+- **普通应用无法静默卸载**：需要 Device Owner 或 Shizuku；无障碍模式只是模拟点击系统确认，不是后台静默卸载
 - 只支持当前用户空间，不处理多用户/工作资料里的应用
 - 系统应用、预装应用不会显示在黑名单选择器中
 - 某些 OEM 会限制后台启动或杀前台服务；`JobScheduler` 作为兜底，但极端省电策略仍可能延迟处理
 - 用户手动“强行停止”应用后，监控会暂停，直到再次打开应用；这是 Android 的系统行为
 - 目标应用如果自身是活动设备管理员，系统可能拒绝卸载，需要先在系统设置中取消其设备管理员
 - Shizuku 清理需要用户自行安装 Shizuku、开启无线调试并授权；Shizuku 服务被杀后会回退手动通知，无法保证始终在线
+- 无障碍模式需要用户手动开启无障碍服务；Android 13+ 可能需要在应用信息中允许受限设置，且不同 OEM 的卸载弹窗按钮文案可能不同
+- 无障碍服务只处理 FuckOff 已排队的系统卸载弹窗，不会自动点击其他应用界面；它仍是高权限能力，使用前请阅读风险说明
 - 自定义规则是受限 Lua 表达式，不是完整 Lua；需要循环、函数或文件访问的复杂逻辑请使用宿主机脚本生成包名后添加简单规则
 - 不提供远程管理、云同步或家长控制服务器；这是本地工具
 

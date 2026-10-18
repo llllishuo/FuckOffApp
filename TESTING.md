@@ -6,21 +6,25 @@
 - 运行：MEmu 逍遥模拟器，Android 9（API 28），x86_64，900×1600（竖屏）
 - 权限：通过 `adb shell dpm set-device-owner` 配置为 Device Owner
 - 应用显示名：FuckOff（包名仍为 `com.menghanstudio.gooutpls`）
-- 测试对象：FuckOff v1.4.0 release APK（debug key 签名）
-- 最终 APK：`FuckOff-v1.4.0.apk`，1,014,360 bytes，SHA-256 `fb06a6756c598a2af0093ad01130a46bab52326f98ea8519547ef73ab6daab6b`
+- 测试对象：FuckOff v1.5.0 release APK（debug key 签名）
+- 最终 APK：`FuckOff-v1.5.0.apk`，1,019,036 bytes，SHA-256 `84d4fd9af006cf6f3298d37e370a09e2a7ed5d0c277e1f0dcbe578bfa8f09fa4`
 - 测试用“黑名单应用”：`...blacklist.victim`、`...blacklist.victim2`
 - Lua 运行时：LuaJ 3.0.1，仅加载 Base/Package/Table/String/Math 库
 - Shizuku 依赖：Shizuku API/AIDL/Provider 13.1.5；测试机未安装 Shizuku
+- v1.5.0 构建时荣耀设备已断开，未能安装/启动新 APK；无障碍实际点击和性能改善未做真机回归
 
 ## 已验证
 
 | 项目 | 结果 |
 | --- | --- |
 | Debug / Release 构建 | 通过 |
-| 荣耀 Magic8 Pro（BKQ-AN90，Android 16 / MagicOS 10）冷启动 | 通过；v1.4.0 可进入首页 |
-| 清理方式选择 | 通过；手动 / Device Owner / Shizuku 三种模式可切换 |
+| 荣耀 Magic8 Pro（BKQ-AN90，Android 16 / MagicOS 10）冷启动 | v1.4.0 通过；v1.5.0 构建后设备断开，未安装 |
+| 清理方式选择 | v1.4.0 通过三种；v1.5.0 新增无障碍第四种，未在真机验证 |
 | Shizuku 未安装时的引导 | 通过；显示安装、无线调试和授权说明，不崩溃 |
 | Shizuku 实际卸载 | 未验证；测试机未安装/启动 Shizuku，代码路径已编译，需实机授权后验证 |
+| 无障碍模拟确认（v1.5.0） | 未验证；服务、权限入口和模式 UI 已编译，设备断开后未安装；需真机开启无障碍并测试 |
+| 应用列表扫描优化（v1.5.0） | 代码审查通过；图标改为按需加载、减少一次 PackageManager 查询；未做设备基准 |
+| v1.5.0 安装包 | 构建通过，APK 未在设备安装（设备断开） |
 | Android Lint | 0 errors |
 | APK 安装并通过 v2 签名校验 | 通过 |
 | Device Owner 配置 | 通过 |
@@ -39,7 +43,7 @@
 | 应用内取消 Device Owner | 通过，同时移除 Active Admin |
 | 无 `INTERNET` 权限 | 通过 |
 | 开源许可文件 | 通过；根目录 `LICENSE`/`NOTICE` 与 APK `assets/LICENSE.txt`/`NOTICE.txt` 一致 |
-| 关于信息 | 通过；版本 1.4.0，作者、Apache-2.0、GitHub 链接、Bilibili、QQ 显示正确 |
+| 关于信息 | v1.4.0 通过；v1.5.0 版本号构建正确，未做真机关于页回归 |
 
 ## 自定义规则安全边界
 
@@ -56,6 +60,13 @@
 - Shizuku 服务未运行、未授权或命令失败时，GuardEngine 会自动回退到手动通知。
 - 实际命令为固定的 `pm uninstall --user 0 <包名>`，包名经过字符校验，不执行任意用户输入的命令。
 - 本次测试环境未安装 Shizuku，因此只验证了 UI 引导、模式切换、权限请求入口和回退路径；实际 shell 卸载需要在安装 Shizuku 后复测。
+
+## 无障碍模拟确认说明
+
+- 该模式是**半自动**：仍需用户点通知或列表「卸载」，系统卸载界面出现后由无障碍服务点击确认。
+- 服务只接受 `ManualUninstallActivity` 入队的包，且只在包安装器/卸载器窗口内查找「卸载 / 确定 / OK」等确认按钮。
+- Android 13+ 侧载应用可能需要在 应用信息 → FuckOff → ⋮ →「允许受限设置」中放开开关。
+- 本次设备断开，未做真机点击验证；不同 OEM 的按钮文案/窗口包名可能不同，失败时应回退手动确认。
 
 ## 荣耀 Android 16 启动问题
 

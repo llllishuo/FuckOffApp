@@ -65,6 +65,17 @@ public final class AppSafetyGuard {
         }
 
         public boolean isProtected(Context context, String packageName) {
+            return isProtected(context, packageName, null);
+        }
+
+        /**
+         * Same checks as {@link #isProtected(Context, String)}, but callers
+         * that already hold an ApplicationInfo can avoid a second
+         * PackageManager binder round-trip. This matters when scanning the
+         * installed-app list.
+         */
+        public boolean isProtected(Context context, String packageName,
+                                   ApplicationInfo knownInfo) {
             // The baseline checks run first and can never be overridden by a
             // custom rule. Custom rules are only allowed to add protection.
             if (AppCatalog.isProtectedPackageName(packageName)) {
@@ -73,16 +84,19 @@ public final class AppSafetyGuard {
             if (rolePackages.contains(packageName)) {
                 return true;
             }
-            try {
-                ApplicationInfo info = context.getPackageManager()
-                        .getApplicationInfo(packageName, 0);
-                if ((info.flags & (ApplicationInfo.FLAG_SYSTEM
-                        | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0) {
-                    return true;
+            ApplicationInfo info = knownInfo;
+            if (info == null) {
+                try {
+                    info = context.getPackageManager()
+                            .getApplicationInfo(packageName, 0);
+                } catch (Exception ignored) {
+                    // Not installed or not visible; custom rules may still
+                    // apply to package names imported for future use.
                 }
-            } catch (Exception e) {
-                // Not installed or not visible; custom rules may still apply
-                // to package names imported for future use.
+            }
+            if (info != null && (info.flags & (ApplicationInfo.FLAG_SYSTEM
+                    | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0) {
+                return true;
             }
             return customRules != null && customRules.isProtected(packageName);
         }

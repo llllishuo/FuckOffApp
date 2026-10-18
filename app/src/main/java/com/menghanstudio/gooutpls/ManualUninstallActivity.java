@@ -10,7 +10,9 @@ import android.widget.Toast;
 import com.menghanstudio.gooutpls.core.AppCatalog;
 import com.menghanstudio.gooutpls.core.AppPrefs;
 import com.menghanstudio.gooutpls.core.AppSafetyGuard;
+import com.menghanstudio.gooutpls.core.CleanupMode;
 import com.menghanstudio.gooutpls.core.GuardEngine;
+import com.menghanstudio.gooutpls.service.AccessibilityCleanupService;
 
 /**
  * Invisible trampoline that opens the system uninstall confirmation. Keeping
@@ -60,6 +62,10 @@ public class ManualUninstallActivity extends Activity {
         }
 
         AppPrefs.markPendingManual(this, packageName);
+        if (CleanupMode.isAccessibility(AppPrefs.getCleanupMode(this))
+                && AccessibilityCleanupService.isEnabled(this)) {
+            AccessibilityCleanupService.enqueue(packageName);
+        }
         Intent uninstall = new Intent(Intent.ACTION_DELETE,
                 Uri.parse("package:" + packageName));
         uninstall.putExtra(Intent.EXTRA_RETURN_RESULT, true);
@@ -90,6 +96,7 @@ public class ManualUninstallActivity extends Activity {
             return;
         }
         boolean removed = !AppCatalog.isInstalled(this, packageName);
+        AccessibilityCleanupService.clear();
         GuardEngine.finalizeManualResult(this, packageName, label, removed);
         finish();
     }

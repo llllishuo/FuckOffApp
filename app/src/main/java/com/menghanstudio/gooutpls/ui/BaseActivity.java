@@ -30,16 +30,36 @@ public abstract class BaseActivity extends Activity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 window.setNavigationBarContrastEnforced(false);
             }
-            WindowInsetsController controller = window.getInsetsController();
+            // Do not call getInsetsController() here. On Android 16 (Honor
+            // MagicOS 10) PhoneWindow.getInsetsController() dereferences the
+            // DecorView, which is not attached until after setContentView().
+            // Applying this in onPostCreate() avoids the startup NPE.
+        } else {
+            window.setStatusBarColor(getColor(R.color.bg));
+            window.setNavigationBarColor(getColor(R.color.bg));
+        }
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        applyLightSystemBars();
+    }
+
+    private void applyLightSystemBars() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            return;
+        }
+        try {
+            WindowInsetsController controller = getWindow().getInsetsController();
             if (controller != null) {
                 controller.setSystemBarsAppearance(
                         0,
                         WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
                                 | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
             }
-        } else {
-            window.setStatusBarColor(getColor(R.color.bg));
-            window.setNavigationBarColor(getColor(R.color.bg));
+        } catch (Throwable ignored) {
+            // The window may be transitioning during activity recreation.
         }
     }
 

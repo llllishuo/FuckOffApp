@@ -6,8 +6,8 @@
 - 运行：MEmu 逍遥模拟器，Android 9（API 28），x86_64，900×1600（竖屏）
 - 权限：通过 `adb shell dpm set-device-owner` 配置为 Device Owner
 - 应用显示名：FuckOff（包名仍为 `com.menghanstudio.gooutpls`）
-- 测试对象：FuckOff v1.3.3 release APK（debug key 签名）
-- 最终 APK：`FuckOff-v1.3.3.apk`，379,980 bytes，SHA-256 `6214674784d5be61785fc1cb1f40dd88986d577e03dff320cf16a92e5934c7a5`
+- 测试对象：FuckOff v1.3.4 release APK（debug key 签名）
+- 最终 APK：`FuckOff-v1.3.4.apk`，380,016 bytes，SHA-256 `bf483c57ccc0609ba41906b2f174bcc6564b2be159bdd6211ff4b417729fdcd4`
 - 测试用“黑名单应用”：`...blacklist.victim`、`...blacklist.victim2`
 - Lua 运行时：LuaJ 3.0.1，仅加载 Base/Package/Table/String/Math 库；许可证文本随 APK assets 一起分发
 
@@ -16,6 +16,7 @@
 | 项目 | 结果 |
 | --- | --- |
 | Debug / Release 构建 | 通过 |
+| 荣耀 Magic8 Pro（BKQ-AN90，Android 16 / MagicOS 10）冷启动 | 通过；v1.3.4 可进入首页 |
 | Android Lint | 0 errors |
 | APK 安装并通过 v2 签名校验 | 通过 |
 | Device Owner 配置 | 通过 |
@@ -34,7 +35,7 @@
 | 应用内取消 Device Owner | 通过，同时移除 Active Admin |
 | 无 `INTERNET` 权限 | 通过 |
 | 开源许可文件 | 通过；根目录 `LICENSE`/`NOTICE` 与 APK `assets/LICENSE.txt`/`NOTICE.txt` 一致 |
-| 关于信息 | 通过；版本 1.3.3，作者、Apache-2.0、GitHub 链接、Bilibili、QQ 显示正确 |
+| 关于信息 | 通过；版本 1.3.4，作者、Apache-2.0、GitHub 链接、Bilibili、QQ 显示正确 |
 
 ## 自定义规则安全边界
 
@@ -44,6 +45,14 @@
 - Lua 环境移除了 `os`、`io`、`package`、`load`、`loadfile`、`dofile`、`require`、`debug`、`luajava`；字符串库移除了 `rep`、`char`、`format`、`dump`。
 - 规则数量上限 50，表达式上限 800 字符；规则读取/编译/执行异常只跳过该条，不影响 App 或基础审查。
 - 规则只保存在本机，**不随黑名单 JSON 导出/导入**。
+
+## 荣耀 Android 16 启动问题
+
+- 实际设备：HONOR BKQ-AN90，Android 16，MagicOS 10.0.0.170。
+- v1.3.3 及之前版本在 `BaseActivity.onCreate()` 中、`setContentView()` 之前调用 `window.getInsetsController()`。
+- 荣耀 Android 16 的 `PhoneWindow` 此时 DecorView 为空，触发：
+  `NullPointerException: Attempt to invoke ... DecorView.getWindowInsetsController() on a null object reference`
+- v1.3.4 把系统栏外观设置移到 `onPostCreate()` 并增加空值/异常保护；已在上述荣耀设备冷启动验证可进入首页。
 
 ## 说明
 

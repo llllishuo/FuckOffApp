@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.os.Build;
+import android.util.Log;
 
 import com.menghanstudio.gooutpls.MainActivity;
 import com.menghanstudio.gooutpls.ManualUninstallActivity;
@@ -18,6 +19,8 @@ import com.menghanstudio.gooutpls.receiver.NotificationActionReceiver;
 
 public final class NotificationHelper {
 
+    private static final String TAG = "FuckOffNotifications";
+
     public static final String CHANNEL_MONITOR = "monitor";
     public static final String CHANNEL_ALERT = "alerts";
     public static final int MONITOR_NOTIFICATION_ID = 1001;
@@ -27,33 +30,38 @@ public final class NotificationHelper {
     }
 
     public static void createChannels(Context context) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            return;
-        }
-        NotificationManager nm = context.getSystemService(NotificationManager.class);
-        if (nm == null) {
-            return;
-        }
+        try {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                return;
+            }
+            NotificationManager nm = context.getSystemService(NotificationManager.class);
+            if (nm == null) {
+                return;
+            }
 
-        NotificationChannel monitor = new NotificationChannel(
-                CHANNEL_MONITOR,
-                context.getString(R.string.notif_channel_monitor),
-                NotificationManager.IMPORTANCE_LOW);
-        monitor.setDescription(context.getString(R.string.notif_channel_monitor_desc));
-        monitor.setShowBadge(false);
-        monitor.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
-        nm.createNotificationChannel(monitor);
+            NotificationChannel monitor = new NotificationChannel(
+                    CHANNEL_MONITOR,
+                    context.getString(R.string.notif_channel_monitor),
+                    NotificationManager.IMPORTANCE_LOW);
+            monitor.setDescription(context.getString(R.string.notif_channel_monitor_desc));
+            monitor.setShowBadge(false);
+            monitor.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+            nm.createNotificationChannel(monitor);
 
-        NotificationChannel alert = new NotificationChannel(
-                CHANNEL_ALERT,
-                context.getString(R.string.notif_channel_alert),
-                NotificationManager.IMPORTANCE_HIGH);
-        alert.setDescription(context.getString(R.string.notif_channel_alert_desc));
-        alert.enableVibration(true);
-        alert.setVibrationPattern(new long[]{0L, 180L, 100L, 180L});
-        alert.setShowBadge(true);
-        alert.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
-        nm.createNotificationChannel(alert);
+            NotificationChannel alert = new NotificationChannel(
+                    CHANNEL_ALERT,
+                    context.getString(R.string.notif_channel_alert),
+                    NotificationManager.IMPORTANCE_HIGH);
+            alert.setDescription(context.getString(R.string.notif_channel_alert_desc));
+            alert.enableVibration(true);
+            alert.setVibrationPattern(new long[]{0L, 180L, 100L, 180L});
+            alert.setShowBadge(true);
+            alert.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+            nm.createNotificationChannel(alert);
+        } catch (Throwable t) {
+            // A vendor NotificationManager must never take down app startup.
+            Log.e(TAG, "Unable to create notification channels", t);
+        }
     }
 
     public static Notification buildMonitorNotification(Context context) {

@@ -40,10 +40,19 @@ public final class AppSafetyGuard {
         return snapshot(context).isProtected(context, packageName);
     }
 
+    /**
+     * Optional, user-defined protection. Kept independent of AppSafetyGuard's
+     * field types so a broken/unsupported optional rules runtime can never
+     * prevent the baseline checks or the home screen from loading.
+     */
+    public interface CustomProtection {
+        boolean isProtected(String packageName);
+    }
+
     public static final class Snapshot {
 
         private final Set<String> rolePackages = new HashSet<>();
-        private final RuleEngine.Evaluator customRules;
+        private final CustomProtection customRules;
 
         private Snapshot(Context context) {
             collectDefaultHome(context);
@@ -52,15 +61,7 @@ public final class AppSafetyGuard {
             collectDefaultSms(context);
             collectActiveAdmins(context);
             collectAccessibilityServices(context);
-
-            RuleEngine.Evaluator evaluator = null;
-            try {
-                evaluator = RuleEngine.create(context);
-            } catch (Throwable ignored) {
-                // Baseline protection must work even if the optional Lua
-                // runtime cannot start.
-            }
-            customRules = evaluator;
+            customRules = CustomRuleSupport.create(context);
         }
 
         public boolean isProtected(Context context, String packageName) {

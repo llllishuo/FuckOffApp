@@ -232,7 +232,7 @@ public final class RuleEngine {
         }
     }
 
-    public static final class Evaluator {
+    public static final class Evaluator implements AppSafetyGuard.CustomProtection {
 
         private final List<CompiledRule> rules;
 

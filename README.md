@@ -115,10 +115,10 @@ sdk >= 31 and pkg:find("keyboard") ~= nil
 
 ## 安装
 
-构建产物位于本地项目根目录 `FuckOff-v1.3.2.apk`（按 `.gitignore` 规则不纳入 Git）。可通过 ADB 安装：
+构建产物位于本地项目根目录 `FuckOff-v1.3.3.apk`（按 `.gitignore` 规则不纳入 Git）。可通过 ADB 安装：
 
 ```bash
-adb install -r FuckOff-v1.3.2.apk
+adb install -r FuckOff-v1.3.3.apk
 ```
 
 重新构建时产物位于：

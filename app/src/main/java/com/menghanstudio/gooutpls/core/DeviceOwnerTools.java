@@ -22,13 +22,21 @@ public final class DeviceOwnerTools {
     }
 
     public static boolean isDeviceOwner(Context context) {
-        DevicePolicyManager manager = dpm(context);
-        return manager != null && manager.isDeviceOwnerApp(context.getPackageName());
+        try {
+            DevicePolicyManager manager = dpm(context);
+            return manager != null && manager.isDeviceOwnerApp(context.getPackageName());
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     public static boolean isAdminActive(Context context) {
-        DevicePolicyManager manager = dpm(context);
-        return manager != null && manager.isAdminActive(adminComponent(context));
+        try {
+            DevicePolicyManager manager = dpm(context);
+            return manager != null && manager.isAdminActive(adminComponent(context));
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     public static String provisioningCommand(Context context) {
@@ -60,12 +68,15 @@ public final class DeviceOwnerTools {
      */
     public static boolean clearDeviceOwner(Context context) {
         DevicePolicyManager manager = dpm(context);
-        if (manager == null || !manager.isDeviceOwnerApp(context.getPackageName())) {
+        if (manager == null) {
             return false;
         }
         try {
+            if (!manager.isDeviceOwnerApp(context.getPackageName())) {
+                return false;
+            }
             manager.clearDeviceOwnerApp(context.getPackageName());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return false;
         }
         try {

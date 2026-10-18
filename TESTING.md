@@ -6,8 +6,8 @@
 - 运行：MEmu 逍遥模拟器，Android 9（API 28），x86_64，900×1600（竖屏）
 - 权限：通过 `adb shell dpm set-device-owner` 配置为 Device Owner
 - 应用显示名：FuckOff（包名仍为 `com.menghanstudio.gooutpls`）
-- 测试对象：FuckOff v1.3.2 release APK（debug key 签名）
-- 最终 APK：`FuckOff-v1.3.2.apk`，379,580 bytes，SHA-256 `c86e0c72b4d9c21adfb4611f3f8ffe9d9401322df2122a91fe62c32c93932d9a`
+- 测试对象：FuckOff v1.3.3 release APK（debug key 签名）
+- 最终 APK：`FuckOff-v1.3.3.apk`，379,980 bytes，SHA-256 `6214674784d5be61785fc1cb1f40dd88986d577e03dff320cf16a92e5934c7a5`
 - 测试用“黑名单应用”：`...blacklist.victim`、`...blacklist.victim2`
 - Lua 运行时：LuaJ 3.0.1，仅加载 Base/Package/Table/String/Math 库；许可证文本随 APK assets 一起分发
 
@@ -34,7 +34,7 @@
 | 应用内取消 Device Owner | 通过，同时移除 Active Admin |
 | 无 `INTERNET` 权限 | 通过 |
 | 开源许可文件 | 通过；根目录 `LICENSE`/`NOTICE` 与 APK `assets/LICENSE.txt`/`NOTICE.txt` 一致 |
-| 关于信息 | 通过；版本 1.3.2，作者、Apache-2.0、GitHub 链接、Bilibili、QQ 显示正确 |
+| 关于信息 | 通过；版本 1.3.3，作者、Apache-2.0、GitHub 链接、Bilibili、QQ 显示正确 |
 
 ## 自定义规则安全边界
 

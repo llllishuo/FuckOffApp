@@ -35,6 +35,8 @@ FuckOff 是一款 Android 黑名单应用清理器：你把自己选中的应用
 - 每个黑名单项可独立选择「跟随系统」或「仅手动」；新添加项默认跟随系统
 - 清理方式支持：手动通知、Device Owner 静默卸载、Shizuku 静默卸载、无障碍模拟确认（半自动）
 - 应用列表改为按需加载图标，并减少重复的 PackageManager 查询，首次扫描更快
+- 手动/无障碍模式增加检测快速路径；通知与灵动岛独立开关
+- 多个黑名单应用可汇总为一个卡片，提供“全部卸载”入口
 - 黑名单支持 JSON 导出 / 导入（系统文件选择器，无需存储权限）
 - 安全保护：关键系统角色不会被卸载
 - 安全审查规则：基础审查固定，另可添加最多 50 条 Lua 表达式规则，按包名/Android 版本/品牌等增加保护
@@ -69,6 +71,21 @@ FuckOff 是一款 Android 黑名单应用清理器：你把自己选中的应用
 - Shizuku 是独立第三方应用，需要用户自行安装和启动。
 
 > 四种清理方式的权限、数据删除、配置门槛和风险见 [CLEANUP_RISKS.md](CLEANUP_RISKS.md)。
+
+### 通知与灵动岛
+
+首页「自动处理」卡片中点击「通知与灵动岛」：
+
+| 开关 | 行为 |
+| --- | --- |
+| 检测通知 | 每个检测到的应用发一条普通通知 |
+| 灵动岛 / 实况通知 | 汇总所有已安装黑名单应用，提供「全部卸载」按钮 |
+
+- 两个开关完全独立；
+- 灵动岛开关默认关闭；
+- 汇总卡片使用 Android 16 promoted ongoing notification；系统不支持时回退普通汇总通知；
+- 多个应用时，「全部卸载」会启动批量队列：手动模式逐个确认，无障碍模式自动点击确认；
+- 荣耀 MagicOS 是否把该通知显示为胶囊由系统/业务准入决定，详见 [HONOR_CAPSULE.md](HONOR_CAPSULE.md)。
 
 ### 每个应用的清理方式
 
@@ -139,10 +156,10 @@ sdk >= 31 and pkg:find("keyboard") ~= nil
 
 ## 安装
 
-构建产物位于本地项目根目录 `FuckOff-v1.5.0.apk`（按 `.gitignore` 规则不纳入 Git）。可通过 ADB 安装：
+构建产物位于本地项目根目录 `FuckOff-v1.6.0.apk`（按 `.gitignore` 规则不纳入 Git）。可通过 ADB 安装：
 
 ```bash
-adb install -r FuckOff-v1.5.0.apk
+adb install -r FuckOff-v1.6.0.apk
 ```
 
 重新构建时产物位于：
@@ -332,6 +349,8 @@ app/src/main/
 │   │   ├── CleanupMode.java            手动/Device Owner/Shizuku 清理方式
 │   │   ├── ShizukuManager.java        Shizuku 权限与 shell 卸载
 │   │   ├── service/AccessibilityCleanupService.java  无障碍模拟确认
+│   │   ├── util/IslandNotificationManager.java  汇总通知/灵动岛适配
+│   │   ├── BatchUninstallActivity.java  批量卸载队列
 │   │   ├── AppSafetyGuard.java        默认桌面/输入法/管理员等安全保护
 │   │   ├── RuleEngine.java            受限 Lua 表达式求值
 │   │   ├── RuleRepository.java        用户规则本地存储
@@ -363,7 +382,7 @@ installer.uninstall(packageName, statusPendingIntent.getIntentSender());
 
 ## 测试状态
 
-已在 Android 9（API 28）模拟器上完成 Device Owner、自动静默卸载、单项手动模式、自定义 Lua 规则（保存/开关/删除/按包名匹配/非法规则拒绝）、导入强制手动且不立即清理、通知手动卸载、后台安装检测、JSON 导出/导入和权限取消的端到端验证；并在 HONOR BKQ-AN90（Android 16 / MagicOS 10.0.0.170）构建验证 v1.5.0；v1.4.0 曾在真机验证首页、清理方式与 Shizuku 引导。v1.5.0 的无障碍实际点击和 Shizuku 实际卸载仍需在安装/授权后验证；Lint 为 0 errors。详细记录见 [TESTING.md](TESTING.md)。Android 13+ 的运行时通知权限和 Android 14+ 的 `specialUse` 前台服务仅完成代码适配，未在对应版本真机上实测。
+已在 Android 9（API 28）模拟器上完成 Device Owner、自动静默卸载、单项手动模式、自定义 Lua 规则（保存/开关/删除/按包名匹配/非法规则拒绝）、导入强制手动且不立即清理、通知手动卸载、后台安装检测、JSON 导出/导入和权限取消的端到端验证；并在 HONOR BKQ-AN90（Android 16 / MagicOS 10.0.0.170）构建验证 v1.6.0；v1.4.0 曾在真机验证首页、清理方式与 Shizuku 引导。v1.6.0 已在 MEmu Android 9 验证启动、通知设置和普通汇总通知回退；荣耀灵动胶囊真机渲染、批量队列、无障碍实际点击和 Shizuku 实际卸载仍需在设备/系统支持后验证；Lint 为 0 errors。详细记录见 [TESTING.md](TESTING.md)。Android 13+ 的运行时通知权限和 Android 14+ 的 `specialUse` 前台服务仅完成代码适配，未在对应版本真机上实测。
 
 ## 已知边界
 
@@ -376,6 +395,7 @@ installer.uninstall(packageName, statusPendingIntent.getIntentSender());
 - Shizuku 清理需要用户自行安装 Shizuku、开启无线调试并授权；Shizuku 服务被杀后会回退手动通知，无法保证始终在线
 - 无障碍模式需要用户手动开启无障碍服务；Android 13+ 可能需要在应用信息中允许受限设置，且不同 OEM 的卸载弹窗按钮文案可能不同
 - 无障碍服务只处理 FuckOff 已排队的系统卸载弹窗，不会自动点击其他应用界面；它仍是高权限能力，使用前请阅读风险说明
+- 荣耀灵动胶囊没有公开的通用第三方按钮 SDK；FuckOff 使用 Android 16 标准汇总通知，实际是否显示为胶囊由荣耀/系统决定
 - 自定义规则是受限 Lua 表达式，不是完整 Lua；需要循环、函数或文件访问的复杂逻辑请使用宿主机脚本生成包名后添加简单规则
 - 不提供远程管理、云同步或家长控制服务器；这是本地工具
 

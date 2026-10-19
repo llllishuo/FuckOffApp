@@ -311,4 +311,26 @@
     <string name="device_owner_setup_title">配置 Device Owner</string>
     <string name="device_owner_setup_steps">1. 打开设备所有者配置页\n2. 按页面提示通过 ADB 完成配置\n3. 返回 FuckOff 后开启自动处理</string>
     <string name="device_owner_open_settings">打开配置页</string>
+
+    <string name="notify_settings_open">通知与灵动岛 →</string>
+    <string name="notify_settings_title">通知与灵动岛</string>
+    <string name="notify_setting_detection">检测通知（每个应用）</string>
+    <string name="notify_setting_island">灵动岛 / 实况通知（汇总）</string>
+    <string name="notify_settings_hint">两者独立管理：关闭检测通知不会关闭灵动岛汇总；关闭灵动岛也不影响普通检测通知。是否显示为灵动胶囊由荣耀/系统决定。</string>
+    <string name="island_channel_name">灵动岛 / 实况通知</string>
+    <string name="island_channel_desc">汇总显示检测到的黑名单应用，并提供一键卸载入口</string>
+    <string name="island_title">发现 %1$d 个黑名单应用</string>
+    <string name="island_text_more"> 等 %1$d 个</string>
+    <string name="island_action_all">全部卸载</string>
+    <string name="island_action_single">卸载「%1$s」</string>
+    <string name="island_action_open">打开 FuckOff</string>
+    <string name="island_action_clear">清除</string>
+    <string name="island_unsupported_hint">当前系统未开放灵动胶囊/实况通知渲染，已使用普通汇总通知；荣耀需系统支持或业务准入。</string>
+    <string name="batch_started">开始处理 %1$d 个黑名单应用</string>
+    <string name="batch_empty">没有检测到已安装的黑名单应用</string>
+    <string name="batch_done">批量处理已结束</string>
+
+    <string name="island_support_ready">系统报告支持实况通知；荣耀/厂商是否显示为灵动胶囊由系统决定。</string>
+    <string name="island_support_fallback">当前系统未报告实况通知支持，将使用普通汇总通知；荣耀灵动胶囊需要系统支持或业务准入。</string>
+    <string name="notify_settings_saved">通知设置已保存</string>
 </resources>

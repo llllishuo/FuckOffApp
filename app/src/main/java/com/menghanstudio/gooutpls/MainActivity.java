@@ -20,6 +20,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Switch;
@@ -42,6 +43,7 @@ import com.menghanstudio.gooutpls.service.AccessibilityCleanupService;
 import com.menghanstudio.gooutpls.service.MonitorService;
 import com.menghanstudio.gooutpls.service.ScanJobService;
 import com.menghanstudio.gooutpls.ui.BaseActivity;
+import com.menghanstudio.gooutpls.util.IslandNotificationManager;
 import com.menghanstudio.gooutpls.util.NotificationHelper;
 
 import java.io.ByteArrayOutputStream;
@@ -82,6 +84,7 @@ public class MainActivity extends BaseActivity {
     private TextView tvCountPending;
     private TextView tvCountRemoved;
     private TextView btnOwner;
+    private TextView btnNotifySettings;
     private TextView btnClearLog;
     private TextView tvEmptyEvents;
     private TextView tvFooter;
@@ -154,6 +157,7 @@ public class MainActivity extends BaseActivity {
         tvCountPending = findViewById(R.id.tvCountPending);
         tvCountRemoved = findViewById(R.id.tvCountRemoved);
         btnOwner = findViewById(R.id.btnOwner);
+        btnNotifySettings = findViewById(R.id.btnNotifySettings);
         btnClearLog = findViewById(R.id.btnClearLog);
         tvEmptyEvents = findViewById(R.id.tvEmptyEvents);
         tvFooter = findViewById(R.id.tvFooter);
@@ -247,7 +251,64 @@ public class MainActivity extends BaseActivity {
         btnCleanupMode.setOnClickListener(v -> showCleanupModeDialog());
         tvModeBadge.setOnClickListener(v -> showCleanupModeDialog());
         btnOwner.setOnClickListener(v -> openProviderSettings());
+        btnNotifySettings.setOnClickListener(v -> showNotificationSettingsDialog());
         btnClearLog.setOnClickListener(v -> confirmClearLog());
+    }
+
+    private void showNotificationSettingsDialog() {
+        int padding = (int) (22 * getResources().getDisplayMetrics().density);
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(padding, padding / 3, padding, 0);
+
+        CheckBox detection = new CheckBox(this);
+        detection.setText(R.string.notify_setting_detection);
+        detection.setChecked(AppPrefs.isDetectionNotificationsEnabled(this));
+        content.addView(detection);
+
+        CheckBox island = new CheckBox(this);
+        island.setText(R.string.notify_setting_island);
+        island.setChecked(AppPrefs.isIslandEnabled(this));
+        content.addView(island);
+
+        TextView hint = new TextView(this);
+        hint.setText(R.string.notify_settings_hint);
+        hint.setTextSize(12f);
+        hint.setTextColor(getColor(R.color.text_muted));
+        hint.setPadding(0, padding / 2, 0, 0);
+        content.addView(hint);
+
+        TextView support = new TextView(this);
+        support.setText(IslandNotificationManager.isPromotedSupported(this)
+                ? R.string.island_support_ready : R.string.island_support_fallback);
+        support.setTextSize(11f);
+        support.setTextColor(getColor(R.color.text_soft));
+        support.setPadding(0, padding / 3, 0, 0);
+        content.addView(support);
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.notify_settings_title)
+                .setView(content)
+                .setNegativeButton(R.string.action_cancel, null)
+                .setPositiveButton(R.string.action_save, (dialog, which) -> {
+                    AppPrefs.setDetectionNotificationsEnabled(this, detection.isChecked());
+                    AppPrefs.setIslandEnabled(this, island.isChecked());
+                    if (detection.isChecked() || island.isChecked()) {
+                        requestNotificationPermission();
+                    }
+                    if (!detection.isChecked()) {
+                        NotificationHelper.cancelAllAlerts(this);
+                    }
+                    if (island.isChecked()) {
+                        NotificationHelper.createChannels(this);
+                        IslandNotificationManager.refresh(this);
+                    } else {
+                        IslandNotificationManager.cancel(this);
+                    }
+                    Toast.makeText(this, R.string.notify_settings_saved,
+                            Toast.LENGTH_SHORT).show();
+                })
+                .show();
     }
 
     private void openProviderSettings() {
@@ -438,6 +499,10 @@ public class MainActivity extends BaseActivity {
             ScanJobService.schedule(this);
         }
         refreshUi();
+        if (AppPrefs.isIslandEnabled(this)) {
+            NotificationHelper.createChannels(this);
+            IslandNotificationManager.refresh(this);
+        }
     }
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")

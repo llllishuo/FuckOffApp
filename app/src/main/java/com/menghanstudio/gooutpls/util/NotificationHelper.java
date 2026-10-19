@@ -23,6 +23,7 @@ public final class NotificationHelper {
 
     public static final String CHANNEL_MONITOR = "monitor";
     public static final String CHANNEL_ALERT = "alerts";
+    public static final String CHANNEL_ISLAND = IslandNotificationManager.CHANNEL_ISLAND;
     public static final int MONITOR_NOTIFICATION_ID = 1001;
     private static final int ALERT_ID_BASE = 10000;
 
@@ -58,6 +59,17 @@ public final class NotificationHelper {
             alert.setShowBadge(true);
             alert.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
             nm.createNotificationChannel(alert);
+
+            NotificationChannel island = new NotificationChannel(
+                    CHANNEL_ISLAND,
+                    context.getString(R.string.island_channel_name),
+                    NotificationManager.IMPORTANCE_HIGH);
+            island.setDescription(context.getString(R.string.island_channel_desc));
+            island.setSound(null, null);
+            island.enableVibration(false);
+            island.setShowBadge(false);
+            island.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+            nm.createNotificationChannel(island);
         } catch (Throwable t) {
             // A vendor NotificationManager must never take down app startup.
             Log.e(TAG, "Unable to create notification channels", t);
@@ -121,7 +133,16 @@ public final class NotificationHelper {
 
     public static void showDetection(Context context, String packageName, String label,
                                      boolean force, boolean autoFailed) {
+        // A package broadcast can cold-start the process without MonitorService
+        // having created channels yet. Make channel creation idempotent here so
+        // the first detection is not silently dropped.
+        createChannels(context);
+        if (!AppPrefs.isDetectionNotificationsEnabled(context)) {
+            IslandNotificationManager.refresh(context);
+            return;
+        }
         if (!force && !AppPrefs.shouldShowAlert(context, packageName)) {
+            IslandNotificationManager.refresh(context);
             return;
         }
         AppPrefs.markAlertShown(context, packageName);
@@ -165,12 +186,25 @@ public final class NotificationHelper {
         } catch (SecurityException ignored) {
             // The event log still records the detection.
         }
+        IslandNotificationManager.refresh(context);
     }
 
     public static void cancelAlert(Context context, String packageName) {
         NotificationManager nm = context.getSystemService(NotificationManager.class);
         if (nm != null) {
             nm.cancel(alertId(packageName));
+        }
+        IslandNotificationManager.refresh(context);
+    }
+
+    public static void cancelAllAlerts(Context context) {
+        NotificationManager nm = context.getSystemService(NotificationManager.class);
+        if (nm == null) {
+            return;
+        }
+        for (com.menghanstudio.gooutpls.core.BlacklistEntry entry
+                : new BlacklistRepository(context).getAll()) {
+            nm.cancel(alertId(entry.packageName));
         }
     }
 

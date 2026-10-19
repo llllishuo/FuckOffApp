@@ -28,7 +28,15 @@ public class PackageChangeReceiver extends BroadcastReceiver {
             if (intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
                 return;
             }
-            GuardEngine.onPackageAdded(context, packageName);
+            PendingResult pending = goAsync();
+            Context app = context.getApplicationContext();
+            new Thread(() -> {
+                try {
+                    GuardEngine.onPackageAdded(app, packageName);
+                } finally {
+                    pending.finish();
+                }
+            }, "fuckoff-package-added").start();
         } else if (Intent.ACTION_PACKAGE_FULLY_REMOVED.equals(intent.getAction())) {
             GuardEngine.onPackageRemoved(context, packageName);
         }

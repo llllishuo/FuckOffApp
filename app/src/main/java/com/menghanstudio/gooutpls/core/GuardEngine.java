@@ -73,10 +73,35 @@ public final class GuardEngine {
         if (entry == null) {
             return;
         }
+        String cleanupMode = AppPrefs.getCleanupMode(app);
+        if (CleanupMode.isManual(cleanupMode)
+                || CleanupMode.isAccessibility(cleanupMode)) {
+            // Manual/accessibility never uninstall here; ManualUninstallActivity
+            // performs the full safety check. Avoid building the role/custom
+            // rule Snapshot just to show a notification, which makes package
+            // detection feel much slower on low-end devices.
+            handleDetectedManualFast(app, entry);
+            return;
+        }
         AppSafetyGuard.Snapshot safety = AppSafetyGuard.snapshot(app);
         if (AppCatalog.isInstalled(app, packageName)
                 && !safety.isProtected(app, packageName)) {
             handleDetected(app, entry, true, safety);
+        }
+    }
+
+    private static void handleDetectedManualFast(Context context, BlacklistEntry entry) {
+        synchronized (LOCK) {
+            if (!AppPrefs.isMonitoringEnabled(context)
+                    || !AppCatalog.isSafeTarget(context, entry.packageName)
+                    || !AppCatalog.isInstalled(context, entry.packageName)) {
+                return;
+            }
+            EventRepository.add(context, EventRepository.TYPE_MANUAL_PROMPT,
+                    entry.packageName,
+                    context.getString(R.string.event_manual_prompt, entry.displayLabel()));
+            NotificationHelperCompat.showDetection(
+                    context, entry.packageName, entry.displayLabel(), true, false);
         }
     }
 

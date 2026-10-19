@@ -6,25 +6,25 @@
 - 运行：MEmu 逍遥模拟器，Android 9（API 28），x86_64，900×1600（竖屏）
 - 权限：通过 `adb shell dpm set-device-owner` 配置为 Device Owner
 - 应用显示名：FuckOff（包名仍为 `com.menghanstudio.gooutpls`）
-- 测试对象：FuckOff v1.5.0 release APK（debug key 签名）
-- 最终 APK：`FuckOff-v1.5.0.apk`，1,019,036 bytes，SHA-256 `84d4fd9af006cf6f3298d37e370a09e2a7ed5d0c277e1f0dcbe578bfa8f09fa4`
+- 测试对象：FuckOff v1.6.0 release APK（debug key 签名）
+- 最终 APK：`FuckOff-v1.6.0.apk`，1,024,236 bytes，SHA-256 `ded861af509b0b17d2c96e2877c59b4d5ebbe58c8e06bb43f4128eaae52c1eab`
 - 测试用“黑名单应用”：`...blacklist.victim`、`...blacklist.victim2`
 - Lua 运行时：LuaJ 3.0.1，仅加载 Base/Package/Table/String/Math 库
 - Shizuku 依赖：Shizuku API/AIDL/Provider 13.1.5；测试机未安装 Shizuku
-- v1.5.0 构建时荣耀设备已断开，未能安装/启动新 APK；无障碍实际点击和性能改善未做真机回归
+- v1.6.0 已在 MEmu Android 9 安装并验证首页、通知设置、普通汇总通知回退；荣耀设备仍未连接，灵动岛真机渲染、批量队列、无障碍实际点击未做回归
 
 ## 已验证
 
 | 项目 | 结果 |
 | --- | --- |
 | Debug / Release 构建 | 通过 |
-| 荣耀 Magic8 Pro（BKQ-AN90，Android 16 / MagicOS 10）冷启动 | v1.4.0 通过；v1.5.0 构建后设备断开，未安装 |
-| 清理方式选择 | v1.4.0 通过三种；v1.5.0 新增无障碍第四种，未在真机验证 |
+| 荣耀 Magic8 Pro（BKQ-AN90，Android 16 / MagicOS 10）冷启动 | v1.4.0 通过；v1.5.0/v1.6.0 构建后荣耀设备断开；v1.6.0 已用 MEmu Android 9 启动验证 |
+| 清理方式选择 | v1.4.0 通过三种；v1.5.0 新增无障碍、v1.6.0 新增灵动岛汇总，均未在真机验证 |
 | Shizuku 未安装时的引导 | 通过；显示安装、无线调试和授权说明，不崩溃 |
 | Shizuku 实际卸载 | 未验证；测试机未安装/启动 Shizuku，代码路径已编译，需实机授权后验证 |
 | 无障碍模拟确认（v1.5.0） | 未验证；服务、权限入口和模式 UI 已编译，设备断开后未安装；需真机开启无障碍并测试 |
 | 应用列表扫描优化（v1.5.0） | 代码审查通过；图标改为按需加载、减少一次 PackageManager 查询；未做设备基准 |
-| v1.5.0 安装包 | 构建通过，APK 未在设备安装（设备断开） |
+| v1.5.0/v1.6.0 安装包 | v1.6.0 在 MEmu Android 9 安装启动通过；荣耀未安装 |
 | Android Lint | 0 errors |
 | APK 安装并通过 v2 签名校验 | 通过 |
 | Device Owner 配置 | 通过 |
@@ -43,7 +43,11 @@
 | 应用内取消 Device Owner | 通过，同时移除 Active Admin |
 | 无 `INTERNET` 权限 | 通过 |
 | 开源许可文件 | 通过；根目录 `LICENSE`/`NOTICE` 与 APK `assets/LICENSE.txt`/`NOTICE.txt` 一致 |
-| 关于信息 | v1.4.0 通过；v1.5.0 版本号构建正确，未做真机关于页回归 |
+| 关于信息 | v1.4.0 通过；v1.5.0/v1.6.0 版本号构建正确，未做真机关于页回归 |
+| 通知/灵动岛（v1.6.0） | MEmu 通过：双开关、普通汇总通知（1 个应用、2001 通知、2 个 action）无崩溃；灵动胶囊真机渲染未验证 |
+| Android 16 promoted ongoing（v1.6.0） | 未验证；MEmu Android 9 仅验证普通通知回退 |
+| 批量队列（v1.6.0） | 未验证；需在 MEmu/真机点汇总通知 action 或直接启动 BatchUninstallActivity |
+| 手动检测快速路径（v1.6.0） | 代码审查通过；跳过通知前的完整 Snapshot，卸载入口仍做完整安全检查 |
 
 ## 自定义规则安全边界
 
@@ -60,6 +64,14 @@
 - Shizuku 服务未运行、未授权或命令失败时，GuardEngine 会自动回退到手动通知。
 - 实际命令为固定的 `pm uninstall --user 0 <包名>`，包名经过字符校验，不执行任意用户输入的命令。
 - 本次测试环境未安装 Shizuku，因此只验证了 UI 引导、模式切换、权限请求入口和回退路径；实际 shell 卸载需要在安装 Shizuku 后复测。
+
+## 通知/灵动岛说明
+
+- 「检测通知」和「灵动岛/实况通知」两个开关分别对应 `detection_notifications_enabled` 和 `island_enabled`，互不影响。
+- 汇总卡片使用 Android 16 promoted ongoing notification 的公开 API；系统不支持时回退普通通知。
+- 荣耀 Magic Capsule 没有开放的通用第三方按钮 SDK；实际是否显示为胶囊由荣耀/YOYO 配置和系统版本决定，不能用私有接口保证。
+- 多个应用时，汇总卡片的「全部卸载」会启动顺序队列；手动模式仍需逐项确认，无障碍模式由服务自动确认。
+- 本次设备断开，未做通知/灵动岛/批量队列真机验证。
 
 ## 无障碍模拟确认说明
 

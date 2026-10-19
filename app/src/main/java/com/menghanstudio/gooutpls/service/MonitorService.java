@@ -7,6 +7,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.net.Uri;
 import android.os.Build;
@@ -27,6 +29,7 @@ public class MonitorService extends Service {
 
     private static final String TAG = "GoOutPlsMonitor";
     private static final long PERIODIC_SCAN_MS = 15L * 60L * 1000L;
+    private static final long PACKAGE_POLL_MS = 3_000L;
 
     public static final String ACTION_START =
             "com.menghanstudio.gooutpls.action.START_MONITOR";
@@ -37,6 +40,7 @@ public class MonitorService extends Service {
     private Handler handler;
     private final AtomicBoolean scanning = new AtomicBoolean(false);
     private boolean packageReceiverRegistered;
+    private java.util.Set<String> knownPackages;
 
     /**
      * Dynamic receivers are exempt from Android 8's implicit-broadcast
@@ -74,6 +78,32 @@ public class MonitorService extends Service {
         }
     };
 
+    /**
+     * Honor/MagicOS and Android background limits can drop PACKAGE_ADDED
+     * manifest broadcasts while the app is not in the foreground. Polling
+     * PackageManager's change sequence from the existing FGS is cheap enough
+     * and gives a 3-second detection path even when the broadcast never lands.
+     */
+    private final Runnable packagePoll = new Runnable() {
+        @Override
+        public void run() {
+            if (!AppPrefs.isMonitoringEnabled(MonitorService.this)) {
+                return;
+            }
+            executor.execute(() -> {
+                try {
+                    pollPackageChanges();
+                } catch (Throwable t) {
+                    Log.w(TAG, "Package poll failed", t);
+                } finally {
+                    if (handler != null) {
+                        handler.postDelayed(this, PACKAGE_POLL_MS);
+                    }
+                }
+            });
+        }
+    };
+
     public static void start(Context context) {
         if (!AppPrefs.isMonitoringEnabled(context)) {
             return;
@@ -89,6 +119,7 @@ public class MonitorService extends Service {
     }
 
     public static void stop(Context context) {
+        ScanAlarmScheduler.cancel(context);
         try {
             context.stopService(new Intent(context, MonitorService.class));
         } catch (Exception ignored) {
@@ -158,6 +189,11 @@ public class MonitorService extends Service {
             return START_NOT_STICKY;
         }
 
+        ScanAlarmScheduler.schedule(this);
+        if (handler != null) {
+            handler.removeCallbacks(packagePoll);
+            handler.postDelayed(packagePoll, PACKAGE_POLL_MS);
+        }
         if (intent != null && ACTION_REFRESH.equals(intent.getAction())) {
             NotificationHelper.updateMonitorNotification(this);
             if (handler != null) {
@@ -173,6 +209,34 @@ public class MonitorService extends Service {
             handler.postDelayed(periodicScan, PERIODIC_SCAN_MS);
         }
         return START_STICKY;
+    }
+
+    private void pollPackageChanges() {
+        PackageManager pm = getPackageManager();
+        java.util.Set<String> current = new java.util.HashSet<>();
+        for (PackageInfo info : pm.getInstalledPackages(0)) {
+            if (info != null && info.packageName != null) {
+                current.add(info.packageName);
+            }
+        }
+        if (knownPackages == null) {
+            knownPackages = current;
+            Log.i(TAG, "Package poll initialized: " + current.size() + " packages");
+            return;
+        }
+        for (String packageName : current) {
+            if (!knownPackages.contains(packageName)) {
+                Log.i(TAG, "Package poll detected add: " + packageName);
+                GuardEngine.onPackageAdded(getApplicationContext(), packageName);
+            }
+        }
+        for (String packageName : knownPackages) {
+            if (!current.contains(packageName)) {
+                Log.i(TAG, "Package poll detected remove: " + packageName);
+                GuardEngine.onPackageRemoved(getApplicationContext(), packageName);
+            }
+        }
+        knownPackages = current;
     }
 
     private void runScan() {
@@ -209,6 +273,7 @@ public class MonitorService extends Service {
             packageReceiverRegistered = false;
         }
         if (handler != null) {
+            handler.removeCallbacks(packagePoll);
             handler.removeCallbacksAndMessages(null);
         }
         if (executor != null) {

@@ -36,6 +36,8 @@ FuckOff 是一款 Android 黑名单应用清理器：你把自己选中的应用
 - 清理方式支持：手动通知、Device Owner 静默卸载、Shizuku 静默卸载、无障碍模拟确认（半自动）
 - 应用列表改为按需加载图标，并减少重复的 PackageManager 查询，首次扫描更快
 - 手动/无障碍模式增加检测快速路径；通知与灵动岛独立开关
+- 后台守护：前台服务轮询 PackageManager、包广播和 10 分钟 Alarm 看门狗三层检测
+- 「后台守护设置」提供荣耀自启动/电池优化/通知的设置指引
 - 多个黑名单应用可汇总为一个卡片，提供“全部卸载”入口
 - 黑名单支持 JSON 导出 / 导入（系统文件选择器，无需存储权限）
 - 安全保护：关键系统角色不会被卸载
@@ -71,6 +73,23 @@ FuckOff 是一款 Android 黑名单应用清理器：你把自己选中的应用
 - Shizuku 是独立第三方应用，需要用户自行安装和启动。
 
 > 四种清理方式的权限、数据删除、配置门槛和风险见 [CLEANUP_RISKS.md](CLEANUP_RISKS.md)。
+
+### 后台检测与保活
+
+FuckOff 用三层机制检测新安装的黑名单应用：
+
+1. **前台服务轮询**：守护服务每 3 秒比较已安装包集合；即使系统拦截 `PACKAGE_ADDED` 广播，只要服务还活着也能在数秒内发现；
+2. **包变更广播**：应用在前台或进程活跃时，广播是最快路径；
+3. **10 分钟 Alarm 看门狗**：服务被系统杀掉后，AlarmManager 仍会唤醒一次扫描；JobScheduler 继续作为 15 分钟兜底。
+
+荣耀/MagicOS 还需要在系统侧允许后台：
+
+- 设置 → 应用 → 应用启动管理 → FuckOff → 手动管理，允许自启动、关联启动、后台活动；
+- 设置 → 电池 → 更多电池设置 → 允许后台活动 / 不限制；
+- 允许通知；
+- 最近任务中锁定 FuckOff。
+
+首页「自动处理」卡片中的「后台守护设置」会直接打开电池优化设置和应用设置。系统若强制停止应用，Alarm/广播也会被系统取消，只能重新打开一次应用恢复。
 
 ### 通知与灵动岛
 
@@ -156,10 +175,10 @@ sdk >= 31 and pkg:find("keyboard") ~= nil
 
 ## 安装
 
-构建产物位于本地项目根目录 `FuckOff-v1.6.0.apk`（按 `.gitignore` 规则不纳入 Git）。可通过 ADB 安装：
+构建产物位于本地项目根目录 `FuckOff-v1.7.0.apk`（按 `.gitignore` 规则不纳入 Git）。可通过 ADB 安装：
 
 ```bash
-adb install -r FuckOff-v1.6.0.apk
+adb install -r FuckOff-v1.7.0.apk
 ```
 
 重新构建时产物位于：
@@ -325,6 +344,8 @@ android {
 | `QUERY_ALL_PACKAGES` | 读取已安装应用，供黑名单选择与扫描 |
 | `REQUEST_DELETE_PACKAGES` | 手动卸载时打开系统卸载界面；Device Owner 自动卸载的公开 API 要求 |
 | `POST_NOTIFICATIONS` | 后台守护和手动卸载提醒 |
+| `POST_PROMOTED_NOTIFICATIONS` | 灵动岛/实况通知提升（Android 16，非运行时） |
+| `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | 引导用户允许后台运行 |
 | `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_SPECIAL_USE` | 持续监控黑名单 |
 | `RECEIVE_BOOT_COMPLETED` | 重启后恢复守护与周期任务 |
 
@@ -349,6 +370,7 @@ app/src/main/
 │   │   ├── CleanupMode.java            手动/Device Owner/Shizuku 清理方式
 │   │   ├── ShizukuManager.java        Shizuku 权限与 shell 卸载
 │   │   ├── service/AccessibilityCleanupService.java  无障碍模拟确认
+│   │   ├── service/ScanAlarmScheduler.java  10 分钟后台看门狗
 │   │   ├── util/IslandNotificationManager.java  汇总通知/灵动岛适配
 │   │   ├── BatchUninstallActivity.java  批量卸载队列
 │   │   ├── AppSafetyGuard.java        默认桌面/输入法/管理员等安全保护
@@ -382,7 +404,7 @@ installer.uninstall(packageName, statusPendingIntent.getIntentSender());
 
 ## 测试状态
 
-已在 Android 9（API 28）模拟器上完成 Device Owner、自动静默卸载、单项手动模式、自定义 Lua 规则（保存/开关/删除/按包名匹配/非法规则拒绝）、导入强制手动且不立即清理、通知手动卸载、后台安装检测、JSON 导出/导入和权限取消的端到端验证；并在 HONOR BKQ-AN90（Android 16 / MagicOS 10.0.0.170）构建验证 v1.6.0；v1.4.0 曾在真机验证首页、清理方式与 Shizuku 引导。v1.6.0 已在 MEmu Android 9 验证启动、通知设置和普通汇总通知回退；荣耀灵动胶囊真机渲染、批量队列、无障碍实际点击和 Shizuku 实际卸载仍需在设备/系统支持后验证；Lint 为 0 errors。详细记录见 [TESTING.md](TESTING.md)。Android 13+ 的运行时通知权限和 Android 14+ 的 `specialUse` 前台服务仅完成代码适配，未在对应版本真机上实测。
+已在 Android 9（API 28）模拟器上完成 Device Owner、自动静默卸载、单项手动模式、自定义 Lua 规则（保存/开关/删除/按包名匹配/非法规则拒绝）、导入强制手动且不立即清理、通知手动卸载、后台安装检测、JSON 导出/导入和权限取消的端到端验证；并在 HONOR BKQ-AN90（Android 16 / MagicOS 10.0.0.170）构建验证 v1.7.0；v1.4.0 曾在真机验证首页、清理方式与 Shizuku 引导。v1.7.0 已在 MEmu Android 9 验证启动、后台轮询检测（应用切后台后安装黑名单应用，3 秒级轮询记录到检测）、后台守护设置界面和 Alarm 调度；荣耀设备未连接，荣耀后台保活/灵动胶囊、批量队列、无障碍实际点击和 Shizuku 实际卸载仍需真机验证；Lint 为 0 errors。详细记录见 [TESTING.md](TESTING.md)。Android 13+ 的运行时通知权限和 Android 14+ 的 `specialUse` 前台服务仅完成代码适配，未在对应版本真机上实测。
 
 ## 已知边界
 
@@ -396,6 +418,7 @@ installer.uninstall(packageName, statusPendingIntent.getIntentSender());
 - 无障碍模式需要用户手动开启无障碍服务；Android 13+ 可能需要在应用信息中允许受限设置，且不同 OEM 的卸载弹窗按钮文案可能不同
 - 无障碍服务只处理 FuckOff 已排队的系统卸载弹窗，不会自动点击其他应用界面；它仍是高权限能力，使用前请阅读风险说明
 - 荣耀灵动胶囊没有公开的通用第三方按钮 SDK；FuckOff 使用 Android 16 标准汇总通知，实际是否显示为胶囊由荣耀/系统决定
+- 荣耀/MagicOS 可能杀死前台服务；FuckOff 提供 3 秒轮询、10 分钟 Alarm 和 JobScheduler 三层兜底，但仍需系统侧允许后台；被强制停止后无法自行恢复
 - 自定义规则是受限 Lua 表达式，不是完整 Lua；需要循环、函数或文件访问的复杂逻辑请使用宿主机脚本生成包名后添加简单规则
 - 不提供远程管理、云同步或家长控制服务器；这是本地工具
 

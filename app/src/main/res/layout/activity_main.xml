@@ -472,6 +472,20 @@
                     android:textSize="12sp" />
 
                 <TextView
+                    android:id="@+id/btnBackgroundSettings"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:fontFamily="sans-serif-medium"
+                    android:paddingTop="3dp"
+                    android:paddingBottom="3dp"
+                    android:text="@string/background_settings_open"
+                    android:textColor="@color/text_soft"
+                    android:textSize="12sp" />
+
+                <TextView
                     android:id="@+id/btnOwner"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

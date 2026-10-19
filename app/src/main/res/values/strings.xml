@@ -333,4 +333,12 @@
     <string name="island_support_ready">系统报告支持实况通知；荣耀/厂商是否显示为灵动胶囊由系统决定。</string>
     <string name="island_support_fallback">当前系统未报告实况通知支持，将使用普通汇总通知；荣耀灵动胶囊需要系统支持或业务准入。</string>
     <string name="notify_settings_saved">通知设置已保存</string>
+
+    <string name="background_settings_open">后台守护设置 →</string>
+    <string name="background_settings_title">保持后台检测</string>
+    <string name="background_settings_steps">荣耀/MagicOS 常会清理后台，请做以下设置：\n\n1. 设置 → 应用 → 应用启动管理 → FuckOff → 手动管理，允许自启动、关联启动、后台活动\n2. 设置 → 电池 → 更多电池设置 → 允许后台活动 / 不限制\n3. 允许 FuckOff 通知\n4. 最近任务中锁定 FuckOff\n\nFuckOff 还会用 10 分钟看门狗兜底扫描；系统省电策略仍可能延迟。</string>
+    <string name="background_battery_exempt">电池优化：已忽略（允许后台运行）</string>
+    <string name="background_battery_restricted">电池优化：未忽略，可能被系统限制</string>
+    <string name="background_open_battery">电池优化设置</string>
+    <string name="background_open_app">应用设置</string>
 </resources>

@@ -6,25 +6,25 @@
 - 运行：MEmu 逍遥模拟器，Android 9（API 28），x86_64，900×1600（竖屏）
 - 权限：通过 `adb shell dpm set-device-owner` 配置为 Device Owner
 - 应用显示名：FuckOff（包名仍为 `com.menghanstudio.gooutpls`）
-- 测试对象：FuckOff v1.6.0 release APK（debug key 签名）
-- 最终 APK：`FuckOff-v1.6.0.apk`，1,024,236 bytes，SHA-256 `ded861af509b0b17d2c96e2877c59b4d5ebbe58c8e06bb43f4128eaae52c1eab`
+- 测试对象：FuckOff v1.7.0 release APK（debug key 签名）
+- 最终 APK：`FuckOff-v1.7.0.apk`，1,027,144 bytes，SHA-256 `59cae1602154030fee6873a36ba604bf38a04380790afefbe4900d46479bbcbb`
 - 测试用“黑名单应用”：`...blacklist.victim`、`...blacklist.victim2`
 - Lua 运行时：LuaJ 3.0.1，仅加载 Base/Package/Table/String/Math 库
 - Shizuku 依赖：Shizuku API/AIDL/Provider 13.1.5；测试机未安装 Shizuku
-- v1.6.0 已在 MEmu Android 9 安装并验证首页、通知设置、普通汇总通知回退；荣耀设备仍未连接，灵动岛真机渲染、批量队列、无障碍实际点击未做回归
+- v1.7.0 已在 MEmu Android 9 安装；验证了首页、后台守护设置、Alarm 调度、应用切后台后的 3 秒级轮询检测；荣耀设备仍未连接
 
 ## 已验证
 
 | 项目 | 结果 |
 | --- | --- |
 | Debug / Release 构建 | 通过 |
-| 荣耀 Magic8 Pro（BKQ-AN90，Android 16 / MagicOS 10）冷启动 | v1.4.0 通过；v1.5.0/v1.6.0 构建后荣耀设备断开；v1.6.0 已用 MEmu Android 9 启动验证 |
+| 荣耀 Magic8 Pro（BKQ-AN90，Android 16 / MagicOS 10）冷启动 | v1.4.0 通过；v1.5.0/v1.6.0 构建后荣耀设备断开；v1.7.0 已用 MEmu Android 9 启动验证 |
 | 清理方式选择 | v1.4.0 通过三种；v1.5.0 新增无障碍、v1.6.0 新增灵动岛汇总，均未在真机验证 |
 | Shizuku 未安装时的引导 | 通过；显示安装、无线调试和授权说明，不崩溃 |
 | Shizuku 实际卸载 | 未验证；测试机未安装/启动 Shizuku，代码路径已编译，需实机授权后验证 |
 | 无障碍模拟确认（v1.5.0） | 未验证；服务、权限入口和模式 UI 已编译，设备断开后未安装；需真机开启无障碍并测试 |
 | 应用列表扫描优化（v1.5.0） | 代码审查通过；图标改为按需加载、减少一次 PackageManager 查询；未做设备基准 |
-| v1.5.0/v1.6.0 安装包 | v1.6.0 在 MEmu Android 9 安装启动通过；荣耀未安装 |
+| v1.5.0/v1.6.0/v1.7.0 安装包 | v1.7.0 在 MEmu Android 9 安装启动通过；荣耀未安装 |
 | Android Lint | 0 errors |
 | APK 安装并通过 v2 签名校验 | 通过 |
 | Device Owner 配置 | 通过 |
@@ -43,8 +43,11 @@
 | 应用内取消 Device Owner | 通过，同时移除 Active Admin |
 | 无 `INTERNET` 权限 | 通过 |
 | 开源许可文件 | 通过；根目录 `LICENSE`/`NOTICE` 与 APK `assets/LICENSE.txt`/`NOTICE.txt` 一致 |
-| 关于信息 | v1.4.0 通过；v1.5.0/v1.6.0 版本号构建正确，未做真机关于页回归 |
+| 关于信息 | v1.4.0 通过；v1.5.0/v1.6.0/v1.7.0 版本号构建正确，未做真机关于页回归 |
 | 通知/灵动岛（v1.6.0） | MEmu 通过：双开关、普通汇总通知（1 个应用、2001 通知、2 个 action）无崩溃；灵动胶囊真机渲染未验证 |
+| 后台守护设置（v1.7.0） | MEmu 通过；荣耀步骤、电池优化状态、应用设置入口均显示 |
+| 10 分钟 Alarm 看门狗（v1.7.0） | MEmu 通过；`dumpsys alarm` 可见 ALARM_SCAN，下一轮约 10 分钟 |
+| 后台轮询检测（v1.7.0） | MEmu 通过；应用切后台后安装/移除黑名单应用，日志在约 3 秒轮询周期内记录 add/remove；手动项正确进入待确认 |
 | Android 16 promoted ongoing（v1.6.0） | 未验证；MEmu Android 9 仅验证普通通知回退 |
 | 批量队列（v1.6.0） | 未验证；需在 MEmu/真机点汇总通知 action 或直接启动 BatchUninstallActivity |
 | 手动检测快速路径（v1.6.0） | 代码审查通过；跳过通知前的完整 Snapshot，卸载入口仍做完整安全检查 |

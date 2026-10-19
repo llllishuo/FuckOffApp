@@ -10,6 +10,7 @@ import com.menghanstudio.gooutpls.R;
 import com.menghanstudio.gooutpls.core.AppPrefs;
 import com.menghanstudio.gooutpls.core.EventRepository;
 import com.menghanstudio.gooutpls.service.MonitorService;
+import com.menghanstudio.gooutpls.service.ScanAlarmScheduler;
 import com.menghanstudio.gooutpls.service.ScanJobService;
 import com.menghanstudio.gooutpls.util.NotificationHelper;
 
@@ -42,6 +43,7 @@ public class NotificationActionReceiver extends BroadcastReceiver {
         AppPrefs.setMonitoringEnabled(context, false);
         MonitorService.stop(context);
         ScanJobService.cancel(context);
+        ScanAlarmScheduler.cancel(context);
         EventRepository.add(context, EventRepository.TYPE_MONITOR_OFF, null,
                 context.getString(R.string.event_monitor_off));
         NotificationManager nm = context.getSystemService(NotificationManager.class);

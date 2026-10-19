@@ -6,6 +6,7 @@ import android.content.Intent;
 
 import com.menghanstudio.gooutpls.core.AppPrefs;
 import com.menghanstudio.gooutpls.service.MonitorService;
+import com.menghanstudio.gooutpls.service.ScanAlarmScheduler;
 import com.menghanstudio.gooutpls.service.ScanJobService;
 
 public class BootReceiver extends BroadcastReceiver {
@@ -24,6 +25,7 @@ public class BootReceiver extends BroadcastReceiver {
             return;
         }
         ScanJobService.schedule(context);
+        ScanAlarmScheduler.schedule(context);
         MonitorService.start(context);
     }
 }

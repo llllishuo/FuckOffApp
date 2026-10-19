@@ -11,11 +11,13 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
+import android.provider.Settings;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -41,6 +43,7 @@ import com.menghanstudio.gooutpls.core.GuardEngine;
 import com.menghanstudio.gooutpls.core.ShizukuManager;
 import com.menghanstudio.gooutpls.service.AccessibilityCleanupService;
 import com.menghanstudio.gooutpls.service.MonitorService;
+import com.menghanstudio.gooutpls.service.ScanAlarmScheduler;
 import com.menghanstudio.gooutpls.service.ScanJobService;
 import com.menghanstudio.gooutpls.ui.BaseActivity;
 import com.menghanstudio.gooutpls.util.IslandNotificationManager;
@@ -85,6 +88,7 @@ public class MainActivity extends BaseActivity {
     private TextView tvCountRemoved;
     private TextView btnOwner;
     private TextView btnNotifySettings;
+    private TextView btnBackgroundSettings;
     private TextView btnClearLog;
     private TextView tvEmptyEvents;
     private TextView tvFooter;
@@ -158,6 +162,7 @@ public class MainActivity extends BaseActivity {
         tvCountRemoved = findViewById(R.id.tvCountRemoved);
         btnOwner = findViewById(R.id.btnOwner);
         btnNotifySettings = findViewById(R.id.btnNotifySettings);
+        btnBackgroundSettings = findViewById(R.id.btnBackgroundSettings);
         btnClearLog = findViewById(R.id.btnClearLog);
         tvEmptyEvents = findViewById(R.id.tvEmptyEvents);
         tvFooter = findViewById(R.id.tvFooter);
@@ -176,13 +181,18 @@ public class MainActivity extends BaseActivity {
                 AppPrefs.setMonitoringEnabled(this, true);
                 MonitorService.start(this);
                 ScanJobService.schedule(this);
+                ScanAlarmScheduler.schedule(this);
                 EventRepository.add(this, EventRepository.TYPE_MONITOR_ON, null,
                         getString(R.string.event_monitor_on));
                 Toast.makeText(this, R.string.toast_monitor_on, Toast.LENGTH_SHORT).show();
+                if (!isIgnoringBatteryOptimizations()) {
+                    showBackgroundSettingsDialog();
+                }
             } else {
                 AppPrefs.setMonitoringEnabled(this, false);
                 MonitorService.stop(this);
                 ScanJobService.cancel(this);
+                ScanAlarmScheduler.cancel(this);
                 EventRepository.add(this, EventRepository.TYPE_MONITOR_OFF, null,
                         getString(R.string.event_monitor_off));
                 NotificationManager nm = getSystemService(NotificationManager.class);
@@ -252,6 +262,7 @@ public class MainActivity extends BaseActivity {
         tvModeBadge.setOnClickListener(v -> showCleanupModeDialog());
         btnOwner.setOnClickListener(v -> openProviderSettings());
         btnNotifySettings.setOnClickListener(v -> showNotificationSettingsDialog());
+        btnBackgroundSettings.setOnClickListener(v -> showBackgroundSettingsDialog());
         btnClearLog.setOnClickListener(v -> confirmClearLog());
     }
 
@@ -309,6 +320,60 @@ public class MainActivity extends BaseActivity {
                             Toast.LENGTH_SHORT).show();
                 })
                 .show();
+    }
+
+    private void showBackgroundSettingsDialog() {
+        boolean ignoring = isIgnoringBatteryOptimizations();
+        String message = getString(R.string.background_settings_steps)
+                + "\n\n"
+                + getString(ignoring
+                ? R.string.background_battery_exempt
+                : R.string.background_battery_restricted);
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.background_settings_title)
+                .setMessage(message)
+                .setNegativeButton(R.string.action_cancel, null)
+                .setNeutralButton(R.string.background_open_app, (dialog, which) ->
+                        openAppSettings())
+                .setPositiveButton(R.string.background_open_battery, (dialog, which) ->
+                        openBatteryOptimizationSettings())
+                .show();
+    }
+
+    private boolean isIgnoringBatteryOptimizations() {
+        try {
+            PowerManager powerManager = getSystemService(PowerManager.class);
+            return powerManager != null
+                    && powerManager.isIgnoringBatteryOptimizations(getPackageName());
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private void openBatteryOptimizationSettings() {
+        try {
+            Intent intent = new Intent(
+                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                    Uri.parse("package:" + getPackageName()));
+            startActivity(intent);
+        } catch (Exception e) {
+            try {
+                startActivity(new Intent(
+                        Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
+            } catch (Exception ignored) {
+                Toast.makeText(this, R.string.background_open_battery,
+                        Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void openAppSettings() {
+        try {
+            startActivity(new Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:" + getPackageName())));
+        } catch (Exception ignored) {
+        }
     }
 
     private void openProviderSettings() {
@@ -497,6 +562,7 @@ public class MainActivity extends BaseActivity {
         if (AppPrefs.isMonitoringEnabled(this)) {
             MonitorService.start(this);
             ScanJobService.schedule(this);
+            ScanAlarmScheduler.schedule(this);
         }
         refreshUi();
         if (AppPrefs.isIslandEnabled(this)) {

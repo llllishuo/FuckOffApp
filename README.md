@@ -22,6 +22,14 @@ FuckOff 是一款 Android 黑名单应用清理器：你把自己选中的应用
 
 ![关于与联系方式](docs/screen-about.png)
 
+## 视频介绍
+
+[![FuckOff 介绍视频](docs/video/FuckOff-intro-v1.7.0-thumbnail.png)](docs/video/FuckOff-intro-v1.7.0.mp4)
+
+45 秒竖屏介绍视频：中文旁白 + 字幕，演示黑名单、四种清理方式、通知/灵动岛、后台守护和安全审查。
+
+[下载 MP4](docs/video/FuckOff-intro-v1.7.0.mp4) · [字幕 SRT](docs/video/FuckOff-intro-v1.7.0.srt) · [分镜脚本](docs/video/SCRIPT.md)
+
 ---
 
 ## 功能

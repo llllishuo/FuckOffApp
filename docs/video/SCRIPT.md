@@ -3,11 +3,11 @@
 - 版本：FuckOff v1.7.0
 - 成片：`FuckOff-intro-v1.7.0.mp4`
 - 画幅：720 × 1280，9:16 竖屏
-- 时长：45.5 秒
+- 时长：42.8 秒
 - 帧率：30 fps
 - 视频：H.264 / yuv420p
 - 音频：AAC 48 kHz 立体声
-- 旁白：Windows Huihui 中文语音（本地生成）
+- 旁白：Microsoft Edge TTS · zh-CN-XiaoxiaoNeural（晓晓，神经网络语音）
 - 字幕：`FuckOff-intro-v1.7.0.srt`
 - 封面：`FuckOff-intro-v1.7.0-thumbnail.png`
 
@@ -27,7 +27,7 @@
 ## 制作说明
 
 - 截图来自 FuckOff v1.7.0（MEmu Android 9 真机界面捕获），界面与应用内实际文案一致。
-- 旁白、背景氛围音均由本地脚本生成，没有使用第三方音乐或素材。
+- 旁白使用 Edge TTS 的晓晓神经网络语音生成；背景氛围音由本地脚本合成，没有使用第三方音乐或素材。
 - 视频对“灵动岛”的表述保持边界：若系统支持 Android 16 promoted ongoing notification 并映射到胶囊，则可能显示为灵动胶囊；否则显示普通汇总通知。视频不声称荣耀 MagicOS 一定会显示胶囊。
 - 需要重新生成时：
 
